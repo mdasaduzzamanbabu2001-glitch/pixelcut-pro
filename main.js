@@ -5,11 +5,11 @@ const os = require('os');
 const https = require('https');
 
 // ==========================================================
-// 🌐 ONLINE INSTANT AUTO-UPDATE CONFIG (GITHUB RAW URL)
+// 🌐 SMART GITHUB AUTO-UPDATE CONFIG
 // ==========================================================
-// নিচে আপনার GitHub Repository-এর Raw লিংক বসান:
-// উদাহরণ: "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/main"
-const DEFAULT_UPDATE_REPO_URL = "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/main";
+const GITHUB_OWNER = "mdasaduzzamanbabu2001-glitch";
+const GITHUB_REPO = "pixelcut-pro";
+const DEFAULT_UPDATE_REPO_URL = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main`;
 
 // ==========================================================
 // 📂 CUSTOM OUTPUT FOLDER SETTING
@@ -81,7 +81,7 @@ let powerBlockerId = null;
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 
 // ==========================================================
-// 🔄 LIVE OVER-THE-AIR (OTA) AUTO-UPDATE ENGINE (ZERO REBUILD!)
+// 🔄 SMART 4-LAYER GITHUB LIVE AUTO-UPDATE ENGINE
 // ==========================================================
 function getLocalPackageJson() {
     try {
@@ -92,10 +92,16 @@ function getLocalPackageJson() {
     }
 }
 
-function getUpdateBaseUrl() {
-    const pkg = getLocalPackageJson();
-    const url = (pkg.updateRepoUrl || DEFAULT_UPDATE_REPO_URL || '').trim().replace(/\/+$/, '');
-    return url;
+function extractOwnerRepo() {
+    try {
+        const pkg = getLocalPackageJson();
+        const rawUrl = (pkg.updateRepoUrl || DEFAULT_UPDATE_REPO_URL || '').trim();
+        const m = rawUrl.match(/github(?:usercontent)?\.com\/([^\/]+)\/([^\/]+)/i);
+        if (m && m[1] && m[2] && !m[1].includes('YOUR_GITHUB')) {
+            return { owner: m[1], repo: m[2].replace(/\.git$/i, '') };
+        }
+    } catch (e) {}
+    return { owner: GITHUB_OWNER, repo: GITHUB_REPO };
 }
 
 function isNewerVersion(localVer, remoteVer) {
@@ -111,10 +117,10 @@ function isNewerVersion(localVer, remoteVer) {
     return false;
 }
 
-function httpsGetNoCache(urlStr, timeoutMs = 12000) {
+function httpsGetNoCache(urlStr, isApi = false, timeoutMs = 12000) {
     return new Promise((resolve, reject) => {
         const separator = urlStr.includes('?') ? '&' : '?';
-        const finalUrl = `${urlStr}${separator}cb=${Date.now()}`;
+        const finalUrl = isApi ? urlStr : `${urlStr}${separator}cb=${Date.now()}`;
         const u = new URL(finalUrl);
 
         const opts = {
@@ -123,6 +129,7 @@ function httpsGetNoCache(urlStr, timeoutMs = 12000) {
             method: 'GET',
             headers: {
                 'User-Agent': SECURE_UA,
+                'Accept': isApi ? 'application/vnd.github.v3+json' : '*/*',
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
                 'Pragma': 'no-cache',
                 'Expires': '0'
@@ -132,7 +139,7 @@ function httpsGetNoCache(urlStr, timeoutMs = 12000) {
 
         const req = https.request(opts, (res) => {
             if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-                return httpsGetNoCache(res.headers.location, timeoutMs).then(resolve).catch(reject);
+                return httpsGetNoCache(res.headers.location, isApi, timeoutMs).then(resolve).catch(reject);
             }
             const chunks = [];
             res.on('data', d => chunks.push(d));
@@ -151,24 +158,58 @@ function httpsGetNoCache(urlStr, timeoutMs = 12000) {
     });
 }
 
+// যেকোনো ব্রাঞ্চ (main/master) অথবা ফোল্ডারের ভেতর থেকেও ফাইল খুঁজে বের করার স্মার্ট ফাংশন
+async function fetchFileFromGitHub(fileName) {
+    const { owner, repo } = extractOwnerRepo();
+
+    // 1. Try 'main' branch raw URL
+    try {
+        return await httpsGetNoCache(`https://raw.githubusercontent.com/${owner}/${repo}/main/${fileName}`);
+    } catch (e1) {}
+
+    // 2. Try 'master' branch raw URL
+    try {
+        return await httpsGetNoCache(`https://raw.githubusercontent.com/${owner}/${repo}/master/${fileName}`);
+    } catch (e2) {}
+
+    // 3. Try GitHub Contents API (automatically detects default branch & subfolders!)
+    try {
+        const rootJson = await httpsGetNoCache(`https://api.github.com/repos/${owner}/${repo}/contents`, true);
+        const items = JSON.parse(rootJson);
+        if (Array.isArray(items)) {
+            const directMatch = items.find(it => it.name && it.name.toLowerCase() === fileName.toLowerCase() && it.download_url);
+            if (directMatch) {
+                return await httpsGetNoCache(directMatch.download_url);
+            }
+            // Check inside subfolders if user uploaded a folder
+            const dirs = items.filter(it => it.type === 'dir' && it.url);
+            for (const d of dirs) {
+                const subJson = await httpsGetNoCache(d.url, true);
+                const subItems = JSON.parse(subJson);
+                if (Array.isArray(subItems)) {
+                    const subMatch = subItems.find(it => it.name && it.name.toLowerCase() === fileName.toLowerCase() && it.download_url);
+                    if (subMatch) {
+                        return await httpsGetNoCache(subMatch.download_url);
+                    }
+                }
+            }
+        }
+        throw new Error(`File '${fileName}' not uploaded to GitHub repo '${repo}' yet!`);
+    } catch (apiErr) {
+        if (String(apiErr.message).includes('404')) {
+            throw new Error(`GitHub Repo '${owner}/${repo}' is Private or Not Found! Make it Public on GitHub.`);
+        }
+        throw apiErr;
+    }
+}
+
 async function checkOnlineUpdate(isManual = false) {
     if (!mainWindow || mainWindow.isDestroyed()) return;
-    const baseUrl = getUpdateBaseUrl();
-
-    if (!baseUrl || baseUrl.includes('YOUR_GITHUB_USERNAME')) {
-        if (isManual) {
-            mainWindow.webContents.send('update-status', {
-                type: 'toast',
-                message: '⚠️ Update URL not configured in package.json / main.js yet!'
-            });
-        }
-        return;
-    }
 
     try {
         const localPkg = getLocalPackageJson();
         const localVersion = localPkg.version || '1.0.0';
-        const remotePkgRaw = await httpsGetNoCache(`${baseUrl}/package.json`);
+        const remotePkgRaw = await fetchFileFromGitHub('package.json');
         const remotePkg = JSON.parse(remotePkgRaw);
         const remoteVersion = remotePkg.version || '1.0.0';
 
@@ -188,7 +229,7 @@ async function checkOnlineUpdate(isManual = false) {
         if (isManual) {
             mainWindow.webContents.send('update-status', {
                 type: 'toast',
-                message: `⚠️ Could not check update: ${err.message}`
+                message: `⚠️ ${err.message}`
             });
         }
     }
@@ -196,7 +237,6 @@ async function checkOnlineUpdate(isManual = false) {
 
 async function performLiveOtaUpdate() {
     if (!mainWindow || mainWindow.isDestroyed()) return;
-    const baseUrl = getUpdateBaseUrl();
     const filesToSync = ['package.json', 'main.js', 'preload.js', 'renderer.js', 'index.html'];
     const downloadedFiles = {};
 
@@ -209,17 +249,20 @@ async function performLiveOtaUpdate() {
                 message: `📥 Syncing ${fileName} (${pct}%)...`
             });
 
-            const content = await httpsGetNoCache(`${baseUrl}/${fileName}`, 15000);
+            const content = await fetchFileFromGitHub(fileName);
             if (!content || content.trim().length < 20) {
                 throw new Error(`Invalid content received for ${fileName}`);
             }
             if (fileName === 'package.json') {
-                JSON.parse(content);
+                const parsedPkg = JSON.parse(content);
+                // Ensure updateRepoUrl is always normalized to raw URL after update
+                parsedPkg.updateRepoUrl = DEFAULT_UPDATE_REPO_URL;
+                downloadedFiles[fileName] = JSON.stringify(parsedPkg, null, 2);
+            } else {
+                downloadedFiles[fileName] = content;
             }
-            downloadedFiles[fileName] = content;
         }
 
-        // Write all verified files atomically into app directory
         for (const fileName of filesToSync) {
             const targetPath = path.join(__dirname, fileName);
             fs.writeFileSync(targetPath, downloadedFiles[fileName], 'utf8');
@@ -1265,7 +1308,6 @@ function createWindow() {
 
     mainWindow.loadFile('index.html');
 
-    // অ্যাপ ওপেন হওয়ার সাথে সাথে ভার্সন দেখানো এবং স্বয়ংক্রিয়ভাবে অনলাইন আপডেট চেক করা
     mainWindow.webContents.on('did-finish-load', () => {
         const localPkg = getLocalPackageJson();
         mainWindow.webContents.send('app-version', localPkg.version || '1.0.0');
@@ -1381,7 +1423,6 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
 });
 
-// Live Auto-Update IPC Handlers
 ipcMain.on('check-for-update', (_event, isManual) => {
     checkOnlineUpdate(Boolean(isManual));
 });
