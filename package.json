@@ -1,10 +1,10 @@
 {
   "name": "pixelcut-pro",
   "productName": "Pixelcut Pro Tool",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Pixelcut Studio Pro Automation Tool",
   "author": "Md Asaduzzaman Babu",
-  "updateNotes": "Asad",
+  "updateNotes": "✨ Improved performance, faster background removal & instant online auto-update system added!",
   "updateRepoUrl": "https://raw.githubusercontent.com/mdasaduzzamanbabu2001-glitch/pixelcut-pro/main",
   "main": "main.js",
   "scripts": {
