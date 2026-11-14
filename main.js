@@ -37,28 +37,23 @@ function getOutputFolder() {
 }
 
 // ==========================================================
-// 🛡️ GOOGLE LOGIN SHIELD + ANTI-MINIMIZE THROTTLING FLAGS
+// 🛡️ SUPERPOWER STEALTH LOGIN + ANTI-MINIMIZE THROTTLING FLAGS
 // ==========================================================
 process.on('unhandledRejection', (reason) => {
     if (reason && (reason.code === 'ERR_ABORTED' || String(reason).includes('(-3)'))) return;
     console.error("Unhandled Rejection:", reason);
 });
 
-const RAW_CHROME_VER = process.versions.chrome || '124.0.6367.243';
-const CHROME_MAJOR = RAW_CHROME_VER.split('.')[0] || '124';
-const CHROME_FULL_VERSION = RAW_CHROME_VER;
-
-let nativeElectronUa = (app.userAgentFallback && app.userAgentFallback.includes('Electron/'))
-    ? app.userAgentFallback
-    : `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) ${app.getName().replace(/\s+/g, '-')}/${app.getVersion()} Chrome/${RAW_CHROME_VER} Electron/${process.versions.electron} Safari/537.36`;
-
-const CLEAN_CHROMIUM_UA = `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_MAJOR}.0.0.0 Safari/537.36`;
-const FIREFOX_UA = `Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0`;
+const RAW_CHROME_VER = process.versions.chrome || '131.0.6778.205';
+const CHROME_MAJOR = RAW_CHROME_VER.split('.')[0] || '131';
+const CHROME_FULL_VERSION = `${CHROME_MAJOR}.0.6778.205`;
+const SECURE_UA = `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_MAJOR}.0.0.0 Safari/537.36`;
+app.userAgentFallback = SECURE_UA;
 
 app.commandLine.appendSwitch('disable-blink-features', 'AutomationControlled');
 app.commandLine.appendSwitch(
     'disable-features',
-    'CalculateNativeWinOcclusion,IntensiveWakeUpThrottling,ThrottleDisplayNoneAndVisibilityHiddenCrossOriginIframes,FedCm,FedCmAuthz'
+    'CalculateNativeWinOcclusion,IntensiveWakeUpThrottling,ThrottleDisplayNoneAndVisibilityHiddenCrossOriginIframes,FedCm,FedCmAuthz,WebAuthentication'
 );
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
 app.commandLine.appendSwitch('disable-background-timer-throttling');
@@ -77,16 +72,13 @@ let mainWindow;
 let view;
 let isViewVisible = false;
 let isAutomationRunning = false;
-let isViewInGoogleLoginMode = false;
 let currentActiveIndex = 0;
 let currentOriginalName = 'Image';
 let downloadDoneResolver = null;
 let lastValidWindowSize = [1050, 780];
 let powerBlockerId = null;
 
-const oauthPopupIds = new Set();
-const firefoxFallbackPopupIds = new Set();
-
+// Auto-update state
 let autoUpdateTimer = null;
 let isCheckingUpdate = false;
 let lastCheckedSha = null;
@@ -94,39 +86,6 @@ let lastAutoPromptedVersion = null;
 let cachedSubfolderPrefix = '';
 
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
-
-function isGoogleAuthHost(urlStr) {
-    try {
-        const host = new URL(urlStr).hostname.toLowerCase();
-        return (
-            host === 'accounts.google.com' ||
-            host.endsWith('.accounts.google.com') ||
-            host === 'accounts.youtube.com' ||
-            host === 'myaccount.google.com' ||
-            host === 'gds.google.com'
-        );
-    } catch (e) {
-        return false;
-    }
-}
-
-function isGoogleDomainHost(urlStr) {
-    try {
-        const host = new URL(urlStr).hostname.toLowerCase();
-        return (
-            host === 'google.com' ||
-            host.endsWith('.google.com') ||
-            host === 'gstatic.com' ||
-            host.endsWith('.gstatic.com') ||
-            host === 'googleusercontent.com' ||
-            host.endsWith('.googleusercontent.com') ||
-            host === 'youtube.com' ||
-            host.endsWith('.youtube.com')
-        );
-    } catch (e) {
-        return false;
-    }
-}
 
 // ==========================================================
 // 🔄 ZERO-DELAY SMART GITHUB AUTO-UPDATE ENGINE (AUTO-POPUP!)
@@ -173,7 +132,7 @@ function httpsGetBuffer(urlStr, extraHeaders = {}, timeoutMs = 12000, redirectLe
             path: u.pathname + u.search,
             method: 'GET',
             headers: {
-                'User-Agent': CLEAN_CHROMIUM_UA,
+                'User-Agent': SECURE_UA,
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
                 'Pragma': 'no-cache',
                 'Expires': '0',
@@ -205,6 +164,7 @@ function httpsGetBuffer(urlStr, extraHeaders = {}, timeoutMs = 12000, redirectLe
     });
 }
 
+// Git Smart HTTP pkt-line থেকে সরাসরি লাইভ Commit Hash বের করে (০ সেকেন্ড ক্যাশ + কোনো Rate Limit নেই!)
 function parseGitPktLinesForHeadSha(buf) {
     let i = 0;
     const refs = {};
@@ -248,6 +208,7 @@ async function getLatestCommitSha(owner, repo) {
 async function fetchFileFromGitHub(fileName, commitSha = null) {
     const { owner, repo } = extractOwnerRepo();
 
+    // 1. যদি Commit SHA থাকে, তবে সরাসরি Immutable SHA URL থেকে নামাবে (০ সেকেন্ড ক্যাশ ডিলে!)
     if (commitSha) {
         try {
             const buf = await httpsGetBuffer(
@@ -267,6 +228,7 @@ async function fetchFileFromGitHub(fileName, commitSha = null) {
         }
     }
 
+    // 2. Fallback: Try main / master branches directly
     for (const branch of ['main', 'master']) {
         try {
             const buf = await httpsGetBuffer(
@@ -276,6 +238,7 @@ async function fetchFileFromGitHub(fileName, commitSha = null) {
         } catch (e) {}
     }
 
+    // 3. Fallback: GitHub API (সাবফোল্ডারসহ খোঁজার জন্য)
     try {
         const refQuery = commitSha ? `?ref=${commitSha}` : '';
         const rootBuf = await httpsGetBuffer(
@@ -315,7 +278,7 @@ async function fetchFileFromGitHub(fileName, commitSha = null) {
 
 async function checkOnlineUpdate(isManual = false) {
     if (!mainWindow || mainWindow.isDestroyed()) return;
-    if (!isManual && isAutomationRunning) return;
+    if (!isManual && isAutomationRunning) return; // ব্যাচ চলাকালীন অটো-পপআপ দিয়ে কাজ থামাবে না
     if (isCheckingUpdate) return;
 
     isCheckingUpdate = true;
@@ -324,8 +287,10 @@ async function checkOnlineUpdate(isManual = false) {
         const localPkg = getLocalPackageJson();
         const localVersion = localPkg.version || '1.0.0';
 
+        // আগে লাইভ Commit Hash চেক করা (মাত্র ~300 bytes, 0-second cache!)
         const liveSha = await getLatestCommitSha(owner, repo);
 
+        // অটো-চেকের সময় যদি GitHub-এ কোনো নতুন Commit না থাকে, তবে এখানেই থেমে যাবে
         if (!isManual && liveSha && liveSha === lastCheckedSha) {
             return;
         }
@@ -426,46 +391,208 @@ async function performLiveOtaUpdate() {
 }
 
 // ==========================================================
-// 🔐 CLEAN MAIN-VIEW PRELOAD (STRICTLY SKIPS ALL GOOGLE HOSTS!)
+// 🥷 DOCUMENT-START MAIN-WORLD STEALTH PRELOAD GENERATOR
 // ==========================================================
 const STEALTH_PRELOAD_PATH = path.join(WORK_TEMP_DIR, 'pixelcut_stealth_preload.js');
 
 const STEALTH_MAIN_WORLD_SCRIPT = `
 (function() {
-    const host = (window.location && window.location.hostname) ? window.location.hostname.toLowerCase() : '';
-    if (!host || host.includes('google.') || host.includes('gstatic.') || host.includes('googleapis.') || host.includes('firebaseapp.') || host.includes('youtube.')) {
-        return;
-    }
-    if (window.__pixelcutCleanEnvApplied) return;
-    window.__pixelcutCleanEnvApplied = true;
+    if (window.__pixelcutSuperStealthApplied) return;
+    window.__pixelcutSuperStealthApplied = true;
 
+    const CHROME_MAJOR = ${JSON.stringify(CHROME_MAJOR)};
+    const CHROME_FULL = ${JSON.stringify(CHROME_FULL_VERSION)};
+
+    const nativeToString = Function.prototype.toString;
+    const maskedFns = new WeakMap();
     try {
-        const NavProto = window.Navigator && window.Navigator.prototype;
-        if (NavProto && window.navigator.webdriver !== false) {
-            Object.defineProperty(NavProto, 'webdriver', {
-                get: () => false,
-                enumerable: true,
-                configurable: true
-            });
-        }
+        const customToString = function toString() {
+            if (maskedFns.has(this)) {
+                return maskedFns.get(this);
+            }
+            return nativeToString.apply(this, arguments);
+        };
+        maskedFns.set(customToString, 'function toString() { [native code] }');
+        Object.defineProperty(Function.prototype, 'toString', {
+            value: customToString,
+            configurable: true,
+            writable: true
+        });
     } catch (e) {}
-})();
-`;
 
-const FIREFOX_AUTH_SHIM_SCRIPT = `
-(function() {
+    function makeNative(fn, name) {
+        try {
+            if (name) Object.defineProperty(fn, 'name', { value: name, configurable: true });
+            maskedFns.set(fn, 'function ' + (name || fn.name || '') + '() { [native code] }');
+        } catch (e) {}
+        return fn;
+    }
+
+    function patchWindowEnv(win) {
+        if (!win) return;
+        try {
+            const NavProto = win.Navigator && win.Navigator.prototype;
+            if (NavProto) {
+                const wdGetter = makeNative(function get webdriver() { return false; }, 'get webdriver');
+                Object.defineProperty(NavProto, 'webdriver', {
+                    get: wdGetter,
+                    enumerable: true,
+                    configurable: true
+                });
+            }
+            if (win.navigator && Object.prototype.hasOwnProperty.call(win.navigator, 'webdriver')) {
+                delete win.navigator.webdriver;
+            }
+        } catch (e) {}
+
+        try {
+            if (!win.chrome || typeof win.chrome !== 'object') {
+                Object.defineProperty(win, 'chrome', {
+                    value: {},
+                    writable: true,
+                    enumerable: true,
+                    configurable: true
+                });
+            }
+
+            if (!win.chrome.app) {
+                win.chrome.app = {
+                    isInstalled: false,
+                    InstallState: { DISABLED: 'disabled', INSTALLED: 'installed', NOT_INSTALLED: 'not_installed' },
+                    RunningState: { CANNOT_RUN: 'cannot_run', READY_TO_RUN: 'ready_to_run', RUNNING: 'running' },
+                    getDetails: makeNative(function getDetails() { return null; }, 'getDetails'),
+                    getIsInstalled: makeNative(function getIsInstalled() { return false; }, 'getIsInstalled'),
+                    installState: makeNative(function installState(cb) { if (typeof cb === 'function') cb('not_installed'); }, 'installState'),
+                    runningState: makeNative(function runningState() { return 'cannot_run'; }, 'runningState')
+                };
+            }
+
+            if (typeof win.chrome.csi !== 'function') {
+                win.chrome.csi = makeNative(function csi() {
+                    return {
+                        startE: Date.now(),
+                        onloadT: Date.now(),
+                        pageT: (win.performance && win.performance.now) ? win.performance.now() : 450.25,
+                        tran: 15
+                    };
+                }, 'csi');
+            }
+
+            if (typeof win.chrome.loadTimes !== 'function') {
+                win.chrome.loadTimes = makeNative(function loadTimes() {
+                    const now = Date.now() / 1000;
+                    return {
+                        commitLoadTime: now,
+                        connectionInfo: 'h2',
+                        finishDocumentLoadTime: now,
+                        finishLoadTime: now,
+                        firstPaintAfterLoadTime: 0,
+                        firstPaintTime: now,
+                        navigationType: 'Other',
+                        npnNegotiatedProtocol: 'h2',
+                        requestTime: now,
+                        startLoadTime: now,
+                        wasAlternateProtocolAvailable: false,
+                        wasFetchedViaSpdy: true,
+                        wasNpnNegotiated: true
+                    };
+                }, 'loadTimes');
+            }
+
+            if (!win.chrome.runtime) {
+                win.chrome.runtime = {
+                    OnInstalledReason: { CHROME_UPDATE: 'chrome_update', INSTALL: 'install', SHARED_MODULE_UPDATE: 'shared_module_update', UPDATE: 'update' },
+                    OnRestartRequiredReason: { APP_UPDATE: 'app_update', OS_UPDATE: 'os_update', PERIODIC: 'periodic' },
+                    PlatformArch: { ARM: 'arm', ARM64: 'arm64', MIPS: 'mips', MIPS64: 'mips64', X86_32: 'x86-32', X86_64: 'x86-64' },
+                    PlatformNaclArch: { ARM: 'arm', MIPS: 'mips', MIPS64: 'mips64', X86_32: 'x86-32', X86_64: 'x86-64' },
+                    PlatformOs: { ANDROID: 'android', CROS: 'cros', LINUX: 'linux', MAC: 'mac', OPENBSD: 'openbsd', WIN: 'win' },
+                    RequestUpdateCheckStatus: { NO_UPDATE: 'no_update', THROTTLED: 'throttled', UPDATE_AVAILABLE: 'update_available' },
+                    connect: makeNative(function connect() {}, 'connect'),
+                    sendMessage: makeNative(function sendMessage() {}, 'sendMessage'),
+                    id: undefined
+                };
+            }
+        } catch (e) {}
+
+        try {
+            const brands = [
+                { brand: 'Not(A:Brand', version: '99' },
+                { brand: 'Google Chrome', version: CHROME_MAJOR },
+                { brand: 'Chromium', version: CHROME_MAJOR }
+            ];
+            const fullVersionList = [
+                { brand: 'Not(A:Brand', version: '99.0.0.0' },
+                { brand: 'Google Chrome', version: CHROME_FULL },
+                { brand: 'Chromium', version: CHROME_FULL }
+            ];
+            const fakeUserAgentData = {
+                brands: brands,
+                mobile: false,
+                platform: 'Windows',
+                getHighEntropyValues: makeNative(function getHighEntropyValues(hints) {
+                    return Promise.resolve({
+                        architecture: 'x86',
+                        bitness: '64',
+                        brands: brands,
+                        fullVersionList: fullVersionList,
+                        mobile: false,
+                        model: '',
+                        platform: 'Windows',
+                        platformVersion: '15.0.0',
+                        uaFullVersion: CHROME_FULL,
+                        wow64: false
+                    });
+                }, 'getHighEntropyValues'),
+                toJSON: makeNative(function toJSON() {
+                    return { brands: brands, mobile: false, platform: 'Windows' };
+                }, 'toJSON')
+            };
+
+            const NavProto = win.Navigator && win.Navigator.prototype;
+            if (NavProto) {
+                Object.defineProperty(NavProto, 'userAgentData', {
+                    get: makeNative(function get userAgentData() { return fakeUserAgentData; }, 'get userAgentData'),
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(NavProto, 'languages', {
+                    get: makeNative(function get languages() { return ['en-US', 'en']; }, 'get languages'),
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(NavProto, 'language', {
+                    get: makeNative(function get language() { return 'en-US'; }, 'get language'),
+                    enumerable: true,
+                    configurable: true
+                });
+            }
+        } catch (e) {}
+
+        try {
+            const cdcProps = Object.getOwnPropertyNames(win).filter(p => /^cdc_|^__webdriver|^__selenium|^__driver|^domAutomation/.test(p));
+            for (const prop of cdcProps) {
+                try { delete win[prop]; } catch (e) {}
+            }
+        } catch (e) {}
+    }
+
+    patchWindowEnv(window);
+
     try {
-        if (window.chrome) {
-            try { delete window.chrome; } catch (e) {}
-            try {
-                Object.defineProperty(window, 'chrome', { get: () => undefined, configurable: true });
-            } catch (e) {}
-        }
-        const NavProto = window.Navigator && window.Navigator.prototype;
-        if (NavProto) {
-            Object.defineProperty(NavProto, 'vendor', { get: () => '', configurable: true });
-            Object.defineProperty(NavProto, 'userAgentData', { get: () => undefined, configurable: true });
-            Object.defineProperty(NavProto, 'webdriver', { get: () => false, configurable: true });
+        const iframeProto = window.HTMLIFrameElement && window.HTMLIFrameElement.prototype;
+        if (iframeProto) {
+            const origContentWindow = Object.getOwnPropertyDescriptor(iframeProto, 'contentWindow');
+            if (origContentWindow && origContentWindow.get) {
+                Object.defineProperty(iframeProto, 'contentWindow', {
+                    get: makeNative(function() {
+                        const cw = origContentWindow.get.call(this);
+                        try { if (cw) patchWindowEnv(cw); } catch (e) {}
+                        return cw;
+                    }, 'get contentWindow'),
+                    enumerable: true,
+                    configurable: true
+                });
+            }
         }
     } catch (e) {}
 })();
@@ -481,7 +608,7 @@ try {
     try {
         fs.writeFileSync(STEALTH_PRELOAD_PATH, preloadContent, 'utf8');
     } catch (e) {
-        console.error("Failed to write preload:", e);
+        console.error("Failed to write stealth preload:", e);
     }
 }
 
@@ -564,7 +691,7 @@ function httpsPostRequest(urlStr, headers, bodyStr, timeoutMs = 10000) {
             path: u.pathname + u.search,
             method: 'POST',
             headers: {
-                'User-Agent': CLEAN_CHROMIUM_UA,
+                'User-Agent': SECURE_UA,
                 'Accept': 'application/json, text/plain, */*',
                 ...headers,
                 'Content-Length': Buffer.byteLength(bodyStr)
@@ -979,7 +1106,7 @@ async function processTransparentPng5000pxTrimAndSave(rawPngPath, readyTitle) {
 // 🛠️ CHROME DEVTOOLS PROTOCOL (CDP) CLICK & ANTI-MINIMIZE ENGINE
 // ==========================================================
 async function ensureDebugger() {
-    if (!view || !view.webContents || view.webContents.isDestroyed()) return null;
+    if (!view || !view.webContents) return null;
     const dbg = view.webContents.debugger;
     if (!dbg.isAttached()) {
         try {
@@ -997,7 +1124,7 @@ async function ensureDebugger() {
 
 function detachDebuggerSafely() {
     try {
-        if (view && view.webContents && !view.webContents.isDestroyed() && view.webContents.debugger.isAttached()) {
+        if (view && view.webContents && view.webContents.debugger.isAttached()) {
             view.webContents.debugger.detach();
         }
     } catch (e) {}
@@ -1005,7 +1132,6 @@ function detachDebuggerSafely() {
 
 async function cdpClick(x, y) {
     const dbg = await ensureDebugger();
-    if (!dbg) return;
     const rx = Math.round(x);
     const ry = Math.round(y);
     await dbg.sendCommand('Input.dispatchMouseEvent', {
@@ -1035,10 +1161,12 @@ async function cdpClick(x, y) {
     await wait(80);
 }
 
+const STEALTH_LOGIN_SCRIPT = STEALTH_MAIN_WORLD_SCRIPT;
+
 const FILE_INPUT_HOOK_SCRIPT = `
     (function() {
         const host = (window.location && window.location.hostname) ? window.location.hostname.toLowerCase() : '';
-        if (!host || host.includes('google.') || host.includes('firebaseapp.') || host.includes('gstatic.') || host.includes('youtube.')) {
+        if (host.includes('google.com') || host.includes('firebaseapp.com') || host.includes('gstatic.com')) {
             return;
         }
 
@@ -1129,7 +1257,7 @@ const FILE_INPUT_HOOK_SCRIPT = `
 `;
 
 function updateViewBounds() {
-    if (!mainWindow || !view || mainWindow.isDestroyed() || !view.webContents || view.webContents.isDestroyed()) return;
+    if (!mainWindow || !view || mainWindow.isDestroyed()) return;
 
     if (!mainWindow.isMinimized()) {
         const [w, h] = mainWindow.getContentSize();
@@ -1147,110 +1275,82 @@ function updateViewBounds() {
 }
 
 // ==========================================================
-// 🔐 UNIVERSAL GOOGLE LOGIN SHIELD (WORKS ON EVERY PC!)
+// 🔐 SESSION & GOOGLE OAUTH POPUP STEALTH CONFIGURER
 // ==========================================================
-async function clearGoogleRejectionCookies(ses) {
-    try {
-        const domains = ['google.com', 'accounts.google.com', 'youtube.com'];
-        for (const dom of domains) {
-            const cookies = await ses.cookies.get({ domain: dom });
-            for (const c of cookies) {
-                const cookieUrl = `https://${c.domain.startsWith('.') ? c.domain.slice(1) : c.domain}${c.path || '/'}`;
-                await ses.cookies.remove(cookieUrl, c.name).catch(() => {});
-            }
-        }
-    } catch (e) {}
-}
-
-function configurePersistSessionHeaders() {
+function configurePersistSessionStealth() {
     ensureStealthPreloadFile();
     const ses = session.fromPartition('persist:pixelcut_pro');
+    ses.setUserAgent(SECURE_UA);
 
-    const CH_UA_CHROMIUM = `"Not-A.Brand";v="99", "Chromium";v="${CHROME_MAJOR}"`;
-    const CH_UA_FULL_CHROMIUM = `"Not-A.Brand";v="99.0.0.0", "Chromium";v="${CHROME_FULL_VERSION}"`;
+    try {
+        if (typeof ses.registerPreloadScript === 'function') {
+            ses.registerPreloadScript({
+                id: 'pixelcut-stealth-preload',
+                type: 'frame',
+                filePath: STEALTH_PRELOAD_PATH
+            });
+        } else if (typeof ses.setPreloads === 'function') {
+            ses.setPreloads([STEALTH_PRELOAD_PATH]);
+        }
+    } catch (e) {
+        try {
+            if (typeof ses.setPreloads === 'function') {
+                ses.setPreloads([STEALTH_PRELOAD_PATH]);
+            }
+        } catch (err) {}
+    }
+
+    const CH_UA = `"Not(A:Brand";v="99", "Google Chrome";v="${CHROME_MAJOR}", "Chromium";v="${CHROME_MAJOR}"`;
+    const CH_UA_FULL_LIST = `"Not(A:Brand";v="99.0.0.0", "Google Chrome";v="${CHROME_FULL_VERSION}", "Chromium";v="${CHROME_FULL_VERSION}"`;
 
     ses.webRequest.onBeforeSendHeaders((details, callback) => {
         const headers = details.requestHeaders || {};
-        const wcId = details.webContentsId;
-        const isViewValid = Boolean(view && view.webContents && !view.webContents.isDestroyed());
-        const viewId = isViewValid ? view.webContents.id : -1;
 
-        // 1. Auto-Fallback Firefox Mode
-        if (typeof wcId === 'number' && firefoxFallbackPopupIds.has(wcId)) {
-            for (const k of Object.keys(headers)) {
-                const lk = k.toLowerCase();
-                if (lk === 'user-agent' || lk.startsWith('sec-ch-ua')) {
-                    delete headers[k];
-                }
+        for (const k of Object.keys(headers)) {
+            const lk = k.toLowerCase();
+            if (
+                lk === 'user-agent' ||
+                lk === 'sec-ch-ua' ||
+                lk === 'sec-ch-ua-full-version-list' ||
+                lk === 'sec-ch-ua-full-version' ||
+                lk === 'sec-ch-ua-platform' ||
+                lk === 'sec-ch-ua-mobile'
+            ) {
+                delete headers[k];
             }
-            headers['User-Agent'] = FIREFOX_UA;
-            return callback({ cancel: false, requestHeaders: headers });
         }
 
-        // 2. Clean OAuth Popups OR Main View while inside Google Login -> 100% UNTOUCHED headers!
-        if ((typeof wcId === 'number' && oauthPopupIds.has(wcId)) || (isViewValid && wcId === viewId && isViewInGoogleLoginMode)) {
-            return callback({ cancel: false, requestHeaders: headers });
-        }
-
-        // 3. Normal Pixelcut / Web App View -> Clean Chromium UA
-        if (isViewValid && wcId === viewId) {
-            for (const k of Object.keys(headers)) {
-                const lk = k.toLowerCase();
-                if (
-                    lk === 'user-agent' ||
-                    lk === 'sec-ch-ua' ||
-                    lk === 'sec-ch-ua-full-version-list' ||
-                    lk === 'sec-ch-ua-full-version' ||
-                    lk === 'sec-ch-ua-platform' ||
-                    lk === 'sec-ch-ua-mobile'
-                ) {
-                    delete headers[k];
-                }
-            }
-            headers['User-Agent'] = CLEAN_CHROMIUM_UA;
-            headers['sec-ch-ua'] = CH_UA_CHROMIUM;
-            headers['sec-ch-ua-mobile'] = '?0';
-            headers['sec-ch-ua-platform'] = '"Windows"';
-            headers['sec-ch-ua-full-version'] = `"${CHROME_FULL_VERSION}"`;
-            headers['sec-ch-ua-full-version-list'] = CH_UA_FULL_CHROMIUM;
-        }
+        headers['User-Agent'] = SECURE_UA;
+        headers['sec-ch-ua'] = CH_UA;
+        headers['sec-ch-ua-mobile'] = '?0';
+        headers['sec-ch-ua-platform'] = '"Windows"';
+        headers['sec-ch-ua-full-version'] = `"${CHROME_FULL_VERSION}"`;
+        headers['sec-ch-ua-full-version-list'] = CH_UA_FULL_LIST;
 
         callback({ cancel: false, requestHeaders: headers });
     });
 }
 
-function getCleanOAuthPopupOptions() {
+function getOAuthPopupOptions() {
     return {
         width: 540,
         height: 700,
         center: true,
         autoHideMenuBar: true,
-        title: "Google Sign-In",
+        title: "Sign In - Google Chrome",
         webPreferences: {
+            preload: STEALTH_PRELOAD_PATH,
             partition: 'persist:pixelcut_pro',
             contextIsolation: true,
             nodeIntegration: false,
-            sandbox: true,
+            sandbox: false,
             nativeWindowOpen: true
         }
     };
 }
 
-function attachGoogleLoginShieldToPopup(childWin) {
+function attachStealthToOAuthPopup(childWin) {
     if (!childWin || childWin.isDestroyed()) return;
-
-    const wcId = childWin.webContents.id;
-    oauthPopupIds.add(wcId);
-
-    childWin.webContents.setUserAgent(nativeElectronUa);
-
-    let lastGoogleAuthUrl = '';
-    let fallbackStage = 0;
-
-    childWin.on('closed', () => {
-        oauthPopupIds.delete(wcId);
-        firefoxFallbackPopupIds.delete(wcId);
-    });
 
     childWin.webContents.setWindowOpenHandler(() => {
         if (!isAutomationRunning) {
@@ -1258,50 +1358,44 @@ function attachGoogleLoginShieldToPopup(childWin) {
         }
         return {
             action: 'allow',
-            overrideBrowserWindowOptions: getCleanOAuthPopupOptions()
+            overrideBrowserWindowOptions: getOAuthPopupOptions()
         };
     });
 
     childWin.webContents.on('did-create-window', (nestedWin) => {
-        attachGoogleLoginShieldToPopup(nestedWin);
+        attachStealthToOAuthPopup(nestedWin);
     });
 
     childWin.webContents.on('dom-ready', () => {
-        if (!childWin.isDestroyed() && firefoxFallbackPopupIds.has(wcId)) {
-            childWin.webContents.executeJavaScript(FIREFOX_AUTH_SHIM_SCRIPT).catch(() => {});
+        if (!childWin.isDestroyed()) {
+            childWin.webContents.executeJavaScript(STEALTH_LOGIN_SCRIPT).catch(() => {});
         }
     });
 
-    childWin.webContents.on('did-navigate', async (_event, navUrl) => {
-        if (!navUrl || childWin.isDestroyed()) return;
-
-        if (isGoogleAuthHost(navUrl) && !navUrl.includes('/signin/rejected') && !navUrl.includes('/CookieMismatch')) {
-            lastGoogleAuthUrl = navUrl;
-        }
-
-        if ((navUrl.includes('/signin/rejected') || navUrl.includes('/v3/signin/rejected')) && fallbackStage === 0) {
-            fallbackStage = 1;
-            const ses = session.fromPartition('persist:pixelcut_pro');
-            await clearGoogleRejectionCookies(ses);
-
-            if (!childWin.isDestroyed()) {
-                firefoxFallbackPopupIds.add(wcId);
-                childWin.webContents.setUserAgent(FIREFOX_UA);
-                if (lastGoogleAuthUrl) {
-                    childWin.loadURL(lastGoogleAuthUrl);
-                } else if (childWin.webContents.navigationHistory?.canGoBack()) {
+    let rejectedRetried = false;
+    childWin.webContents.on('did-navigate', async (event, navUrl) => {
+        if (!rejectedRetried && navUrl && navUrl.includes('/signin/rejected')) {
+            rejectedRetried = true;
+            try {
+                const ses = session.fromPartition('persist:pixelcut_pro');
+                const cookies = await ses.cookies.get({ domain: 'google.com' });
+                for (const c of cookies) {
+                    const cookieUrl = `https://${c.domain.startsWith('.') ? c.domain.slice(1) : c.domain}${c.path || '/'}`;
+                    await ses.cookies.remove(cookieUrl, c.name).catch(() => {});
+                }
+                if (!childWin.isDestroyed() && childWin.webContents.navigationHistory?.canGoBack()) {
                     childWin.webContents.navigationHistory.goBack();
-                } else {
+                } else if (!childWin.isDestroyed()) {
                     childWin.webContents.goBack();
                 }
-            }
+            } catch (e) {}
         }
     });
 }
 
 function createWindow() {
     powerBlockerId = powerSaveBlocker.start('prevent-app-suspension');
-    configurePersistSessionHeaders();
+    configurePersistSessionStealth();
 
     mainWindow = new BrowserWindow({
         width: 1050,
@@ -1324,6 +1418,7 @@ function createWindow() {
         const localPkg = getLocalPackageJson();
         mainWindow.webContents.send('app-version', localPkg.version || '1.0.0');
 
+        // অ্যাপ ওপেন হওয়ার ১.৫ সেকেন্ড পর প্রথমবার এবং এরপর প্রতি ১০ সেকেন্ড পরপর অটোমেটিক আপডেট চেক করবে!
         setTimeout(() => {
             checkOnlineUpdate(false);
         }, 1500);
@@ -1354,56 +1449,7 @@ function createWindow() {
         }
     });
 
-    // Capture Electron's genuine native UA before assigning CLEAN_CHROMIUM_UA to main view
-    const actualNativeUa = view.webContents.getUserAgent();
-    if (actualNativeUa && actualNativeUa.includes('Electron/')) {
-        nativeElectronUa = actualNativeUa;
-    }
-
-    view.webContents.setUserAgent(CLEAN_CHROMIUM_UA);
-
-    let viewLastGoogleAuthUrl = '';
-    let viewFallbackStage = 0;
-
-    view.webContents.on('will-navigate', (event, navUrl) => {
-        if (!isAutomationRunning && isGoogleAuthHost(navUrl) && !isViewInGoogleLoginMode) {
-            event.preventDefault();
-            isViewInGoogleLoginMode = true;
-            viewFallbackStage = 0;
-            viewLastGoogleAuthUrl = navUrl;
-            detachDebuggerSafely();
-            view.webContents.setUserAgent(nativeElectronUa);
-            view.webContents.loadURL(navUrl);
-        }
-    });
-
-    view.webContents.on('did-navigate', async (_event, navUrl) => {
-        if (!navUrl) return;
-
-        if (isGoogleAuthHost(navUrl) && !navUrl.includes('/signin/rejected')) {
-            viewLastGoogleAuthUrl = navUrl;
-        }
-
-        if ((navUrl.includes('/signin/rejected') || navUrl.includes('/v3/signin/rejected')) && viewFallbackStage === 0) {
-            viewFallbackStage = 1;
-            isViewInGoogleLoginMode = true;
-            const ses = session.fromPartition('persist:pixelcut_pro');
-            await clearGoogleRejectionCookies(ses);
-            firefoxFallbackPopupIds.add(view.webContents.id);
-            view.webContents.setUserAgent(FIREFOX_UA);
-            if (viewLastGoogleAuthUrl) {
-                view.webContents.loadURL(viewLastGoogleAuthUrl);
-            }
-            return;
-        }
-
-        if (!isGoogleDomainHost(navUrl) && isViewInGoogleLoginMode) {
-            isViewInGoogleLoginMode = false;
-            viewFallbackStage = 0;
-            firefoxFallbackPopupIds.delete(view.webContents.id);
-            view.webContents.setUserAgent(CLEAN_CHROMIUM_UA);
-        }
-    });
+    view.webContents.setUserAgent(SECURE_UA);
 
     view.webContents.setWindowOpenHandler(() => {
         if (!isAutomationRunning) {
@@ -1411,12 +1457,12 @@ function createWindow() {
         }
         return {
             action: 'allow',
-            overrideBrowserWindowOptions: getCleanOAuthPopupOptions()
+            overrideBrowserWindowOptions: getOAuthPopupOptions()
         };
     });
 
     view.webContents.on('did-create-window', (childWin) => {
-        attachGoogleLoginShieldToPopup(childWin);
+        attachStealthToOAuthPopup(childWin);
     });
 
     mainWindow.setBrowserView(view);
@@ -1444,27 +1490,21 @@ function createWindow() {
     view.webContents.on('dom-ready', () => {
         if (isAutomationRunning) {
             ensureDebugger().catch(() => {});
-            view.webContents.executeJavaScript(FILE_INPUT_HOOK_SCRIPT).catch(() => {});
         } else {
             detachDebuggerSafely();
-            if (firefoxFallbackPopupIds.has(view.webContents.id)) {
-                view.webContents.executeJavaScript(FIREFOX_AUTH_SHIM_SCRIPT).catch(() => {});
-            } else if (!isViewInGoogleLoginMode) {
-                view.webContents.executeJavaScript(FILE_INPUT_HOOK_SCRIPT).catch(() => {});
-            }
         }
+        view.webContents.executeJavaScript(STEALTH_LOGIN_SCRIPT).catch(() => {});
+        view.webContents.executeJavaScript(FILE_INPUT_HOOK_SCRIPT).catch(() => {});
     });
 
     view.webContents.on('did-finish-load', () => {
         if (isAutomationRunning) {
             ensureDebugger().catch(() => {});
-            view.webContents.executeJavaScript(FILE_INPUT_HOOK_SCRIPT).catch(() => {});
         } else {
             detachDebuggerSafely();
-            if (!isViewInGoogleLoginMode) {
-                view.webContents.executeJavaScript(FILE_INPUT_HOOK_SCRIPT).catch(() => {});
-            }
         }
+        view.webContents.executeJavaScript(STEALTH_LOGIN_SCRIPT).catch(() => {});
+        view.webContents.executeJavaScript(FILE_INPUT_HOOK_SCRIPT).catch(() => {});
     });
 
     view.webContents.on('console-message', (event, level, message) => {
@@ -1524,7 +1564,7 @@ ipcMain.on('toggle-view', (event, show) => {
 });
 
 ipcMain.on('start-reset', async () => {
-    if (view && view.webContents && !view.webContents.isDestroyed()) {
+    if (view && view.webContents) {
         await view.webContents.loadURL('https://www.pixelcut.ai/create');
     }
 });
@@ -1684,10 +1724,6 @@ async function runBatchAutomation(event, incomingData) {
     };
 
     isAutomationRunning = true;
-    isViewInGoogleLoginMode = false;
-    firefoxFallbackPopupIds.delete(view.webContents.id);
-    view.webContents.setUserAgent(CLEAN_CHROMIUM_UA);
-
     await ensureDebugger();
     updateViewBounds();
 
