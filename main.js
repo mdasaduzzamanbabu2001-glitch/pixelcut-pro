@@ -16,7 +16,10 @@ const DEFAULT_UPDATE_REPO_URL = `https://raw.githubusercontent.com/${GITHUB_OWNE
 // ==========================================================
 const CUSTOM_OUTPUT_FOLDER = "";
 
-
+const DESKTOP_PATH = path.join(os.homedir(), 'Desktop');
+const WORK_TEMP_DIR = path.join(app.getPath('userData'), 'pixelcut_temp_work');
+const SAVED_KEY_FILE = path.join(DESKTOP_PATH, 'gemini_api_key.txt');
+const DEFAULT_GEMINI_KEY = "AIzaSyC80w5GGuxs9akysrKAGCwH6gw9-lMvraY";
 
 if (!fs.existsSync(WORK_TEMP_DIR)) {
     fs.mkdirSync(WORK_TEMP_DIR, { recursive: true });
