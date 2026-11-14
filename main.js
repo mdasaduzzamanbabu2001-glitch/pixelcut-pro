@@ -48,16 +48,13 @@ const RAW_CHROME_VER = process.versions.chrome || '124.0.6367.243';
 const CHROME_MAJOR = RAW_CHROME_VER.split('.')[0] || '124';
 const CHROME_FULL_VERSION = RAW_CHROME_VER;
 
-// 🔥 CRITICAL: NEVER overwrite app.userAgentFallback globally!
-// Keep genuine untouched Electron UA for Google OAuth popups so Google NEVER triggers "This browser or app may not be secure".
-const NATIVE_ELECTRON_UA = (app.userAgentFallback && app.userAgentFallback.includes('Electron/'))
+let nativeElectronUa = (app.userAgentFallback && app.userAgentFallback.includes('Electron/'))
     ? app.userAgentFallback
-    : `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) ${app.getName()}/${app.getVersion()} Chrome/${RAW_CHROME_VER} Electron/${process.versions.electron} Safari/537.36`;
+    : `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) ${app.getName().replace(/\s+/g, '-')}/${app.getVersion()} Chrome/${RAW_CHROME_VER} Electron/${process.versions.electron} Safari/537.36`;
 
 const CLEAN_CHROMIUM_UA = `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_MAJOR}.0.0.0 Safari/537.36`;
 const FIREFOX_UA = `Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0`;
 
-// Disable Blink AutomationControlled & FedCM (keep WebAuthentication ENABLED for 2FA/Passkeys!)
 app.commandLine.appendSwitch('disable-blink-features', 'AutomationControlled');
 app.commandLine.appendSwitch(
     'disable-features',
@@ -87,11 +84,9 @@ let downloadDoneResolver = null;
 let lastValidWindowSize = [1050, 780];
 let powerBlockerId = null;
 
-// Track OAuth popup WebContents cleanly without desyncing headers
 const oauthPopupIds = new Set();
 const firefoxFallbackPopupIds = new Set();
 
-// Auto-update state
 let autoUpdateTimer = null;
 let isCheckingUpdate = false;
 let lastCheckedSha = null;
@@ -437,7 +432,6 @@ const STEALTH_PRELOAD_PATH = path.join(WORK_TEMP_DIR, 'pixelcut_stealth_preload.
 
 const STEALTH_MAIN_WORLD_SCRIPT = `
 (function() {
-    // 🛡️ NEVER touch Google/Firebase auth pages — zero tampering means Google trusts the browser!
     const host = (window.location && window.location.hostname) ? window.location.hostname.toLowerCase() : '';
     if (!host || host.includes('google.') || host.includes('gstatic.') || host.includes('googleapis.') || host.includes('firebaseapp.') || host.includes('youtube.')) {
         return;
@@ -985,7 +979,7 @@ async function processTransparentPng5000pxTrimAndSave(rawPngPath, readyTitle) {
 // 🛠️ CHROME DEVTOOLS PROTOCOL (CDP) CLICK & ANTI-MINIMIZE ENGINE
 // ==========================================================
 async function ensureDebugger() {
-    if (!view || !view.webContents) return null;
+    if (!view || !view.webContents || view.webContents.isDestroyed()) return null;
     const dbg = view.webContents.debugger;
     if (!dbg.isAttached()) {
         try {
@@ -1003,7 +997,7 @@ async function ensureDebugger() {
 
 function detachDebuggerSafely() {
     try {
-        if (view && view.webContents && view.webContents.debugger.isAttached()) {
+        if (view && view.webContents && !view.webContents.isDestroyed() && view.webContents.debugger.isAttached()) {
             view.webContents.debugger.detach();
         }
     } catch (e) {}
@@ -1011,6 +1005,7 @@ function detachDebuggerSafely() {
 
 async function cdpClick(x, y) {
     const dbg = await ensureDebugger();
+    if (!dbg) return;
     const rx = Math.round(x);
     const ry = Math.round(y);
     await dbg.sendCommand('Input.dispatchMouseEvent', {
@@ -1134,7 +1129,7 @@ const FILE_INPUT_HOOK_SCRIPT = `
 `;
 
 function updateViewBounds() {
-    if (!mainWindow || !view || mainWindow.isDestroyed()) return;
+    if (!mainWindow || !view || mainWindow.isDestroyed() || !view.webContents || view.webContents.isDestroyed()) return;
 
     if (!mainWindow.isMinimized()) {
         const [w, h] = mainWindow.getContentSize();
@@ -1171,17 +1166,17 @@ function configurePersistSessionHeaders() {
     ensureStealthPreloadFile();
     const ses = session.fromPartition('persist:pixelcut_pro');
 
-    // 🔥 DO NOT call ses.setUserAgent() or ses.registerPreloadScript() globally!
-    // Keeping session default clean ensures Google OAuth popups run with 100% genuine Electron identity.
     const CH_UA_CHROMIUM = `"Not-A.Brand";v="99", "Chromium";v="${CHROME_MAJOR}"`;
     const CH_UA_FULL_CHROMIUM = `"Not-A.Brand";v="99.0.0.0", "Chromium";v="${CHROME_FULL_VERSION}"`;
 
     ses.webRequest.onBeforeSendHeaders((details, callback) => {
         const headers = details.requestHeaders || {};
         const wcId = details.webContentsId;
+        const isViewValid = Boolean(view && view.webContents && !view.webContents.isDestroyed());
+        const viewId = isViewValid ? view.webContents.id : -1;
 
-        // 1. Auto-Fallback Firefox Mode (if an account/PC ever rejected native Electron)
-        if (wcId && firefoxFallbackPopupIds.has(wcId)) {
+        // 1. Auto-Fallback Firefox Mode
+        if (typeof wcId === 'number' && firefoxFallbackPopupIds.has(wcId)) {
             for (const k of Object.keys(headers)) {
                 const lk = k.toLowerCase();
                 if (lk === 'user-agent' || lk.startsWith('sec-ch-ua')) {
@@ -1193,12 +1188,12 @@ function configurePersistSessionHeaders() {
         }
 
         // 2. Clean OAuth Popups OR Main View while inside Google Login -> 100% UNTOUCHED headers!
-        if ((wcId && oauthPopupIds.has(wcId)) || (view && !view.isDestroyed() && wcId === view.webContents.id && isViewInGoogleLoginMode)) {
+        if ((typeof wcId === 'number' && oauthPopupIds.has(wcId)) || (isViewValid && wcId === viewId && isViewInGoogleLoginMode)) {
             return callback({ cancel: false, requestHeaders: headers });
         }
 
-        // 3. Normal Pixelcut / Web App View -> Clean Chromium UA (keeps Cloudflare working smoothly)
-        if (view && !view.isDestroyed() && wcId === view.webContents.id) {
+        // 3. Normal Pixelcut / Web App View -> Clean Chromium UA
+        if (isViewValid && wcId === viewId) {
             for (const k of Object.keys(headers)) {
                 const lk = k.toLowerCase();
                 if (
@@ -1237,7 +1232,6 @@ function getCleanOAuthPopupOptions() {
             nodeIntegration: false,
             sandbox: true,
             nativeWindowOpen: true
-            // 🔥 ZERO preload script attached — pure genuine browser environment!
         }
     };
 }
@@ -1248,11 +1242,10 @@ function attachGoogleLoginShieldToPopup(childWin) {
     const wcId = childWin.webContents.id;
     oauthPopupIds.add(wcId);
 
-    // Ensure genuine untouched Electron UA from frame 0
-    childWin.webContents.setUserAgent(NATIVE_ELECTRON_UA);
+    childWin.webContents.setUserAgent(nativeElectronUa);
 
     let lastGoogleAuthUrl = '';
-    let fallbackStage = 0; // 0 = Native Electron, 1 = Firefox Fallback
+    let fallbackStage = 0;
 
     childWin.on('closed', () => {
         oauthPopupIds.delete(wcId);
@@ -1282,12 +1275,10 @@ function attachGoogleLoginShieldToPopup(childWin) {
     childWin.webContents.on('did-navigate', async (_event, navUrl) => {
         if (!navUrl || childWin.isDestroyed()) return;
 
-        // Save valid Google Sign-In URL before any possible rejection redirect
         if (isGoogleAuthHost(navUrl) && !navUrl.includes('/signin/rejected') && !navUrl.includes('/CookieMismatch')) {
             lastGoogleAuthUrl = navUrl;
         }
 
-        // 🔥 Auto-Recovery Layer: if Google rejects even native Electron on a strict PC/account, switch cleanly to Firefox Mode!
         if ((navUrl.includes('/signin/rejected') || navUrl.includes('/v3/signin/rejected')) && fallbackStage === 0) {
             fallbackStage = 1;
             const ses = session.fromPartition('persist:pixelcut_pro');
@@ -1363,9 +1354,14 @@ function createWindow() {
         }
     });
 
+    // Capture Electron's genuine native UA before assigning CLEAN_CHROMIUM_UA to main view
+    const actualNativeUa = view.webContents.getUserAgent();
+    if (actualNativeUa && actualNativeUa.includes('Electron/')) {
+        nativeElectronUa = actualNativeUa;
+    }
+
     view.webContents.setUserAgent(CLEAN_CHROMIUM_UA);
 
-    // Track redirect-based Google Sign-In in main view (also prepares for Image Vectorizer & similar sites!)
     let viewLastGoogleAuthUrl = '';
     let viewFallbackStage = 0;
 
@@ -1376,7 +1372,7 @@ function createWindow() {
             viewFallbackStage = 0;
             viewLastGoogleAuthUrl = navUrl;
             detachDebuggerSafely();
-            view.webContents.setUserAgent(NATIVE_ELECTRON_UA);
+            view.webContents.setUserAgent(nativeElectronUa);
             view.webContents.loadURL(navUrl);
         }
     });
@@ -1401,7 +1397,6 @@ function createWindow() {
             return;
         }
 
-        // Returned back from Google Sign-In to main site
         if (!isGoogleDomainHost(navUrl) && isViewInGoogleLoginMode) {
             isViewInGoogleLoginMode = false;
             viewFallbackStage = 0;
@@ -1529,7 +1524,7 @@ ipcMain.on('toggle-view', (event, show) => {
 });
 
 ipcMain.on('start-reset', async () => {
-    if (view && view.webContents) {
+    if (view && view.webContents && !view.webContents.isDestroyed()) {
         await view.webContents.loadURL('https://www.pixelcut.ai/create');
     }
 });
