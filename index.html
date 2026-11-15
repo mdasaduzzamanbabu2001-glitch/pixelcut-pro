@@ -52,7 +52,7 @@
       display: flex;
       flex-direction: column;
       transform: translateZ(0);
-      will-change: transform, width, height;
+      will-change: transform;
       transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), border-color 0.15s ease;
     }
 
@@ -161,6 +161,7 @@
     }
     body.view-active .scanner-line {
       width: 92px;
+      animation-name: scanLaserCompact;
     }
     body.view-active .progress-wrapper {
       margin-top: 0;
@@ -186,6 +187,7 @@
       gap: 12px;
       max-height: 155px;
       overflow-y: auto;
+      contain: content;
     }
     .file-preview-box::-webkit-scrollbar { width: 5px; }
     .file-preview-box::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 5px; }
@@ -247,7 +249,7 @@
     .thumb-wrapper.completed .delete-btn { display: none; }
 
     /* =========================================================
-       🔬 CLEAN SCANNER PREVIEW
+       🔬 CLEAN SCANNER PREVIEW (100% GPU COMPOSITED LASER)
        ========================================================= */
     .processing-preview-container {
       display: none;
@@ -263,6 +265,8 @@
       border: 1px solid rgba(56, 189, 248, 0.45);
       background: rgba(9, 13, 22, 0.8);
       overflow: hidden;
+      contain: layout paint;
+      transform: translateZ(0);
     }
     .processing-preview-container img {
       width: 115px;
@@ -275,15 +279,24 @@
       position: absolute;
       top: 0;
       left: 50%;
-      transform: translateX(-50%);
       width: 120px;
       height: 3px;
       background: #38bdf8;
       box-shadow: 0 0 12px #38bdf8;
       border-radius: 4px;
+      will-change: transform;
+      transform: translate3d(-50%, 4px, 0);
+      backface-visibility: hidden;
       animation: scanLaser 1.6s ease-in-out infinite;
     }
-    @keyframes scanLaser { 0%, 100% { top: 4px; } 50% { top: calc(100% - 7px); } }
+    @keyframes scanLaser {
+      0%, 100% { transform: translate3d(-50%, 4px, 0); }
+      50% { transform: translate3d(-50%, 118px, 0); }
+    }
+    @keyframes scanLaserCompact {
+      0%, 100% { transform: translate3d(-50%, 4px, 0); }
+      50% { transform: translate3d(-50%, 89px, 0); }
+    }
 
     /* =========================================================
        ⚡ MODERN MINIMAL BUTTONS
@@ -362,6 +375,7 @@
       padding: 12px 16px;
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.08);
+      contain: layout style;
     }
     .progress-header-row {
       display: flex;
@@ -385,6 +399,7 @@
       border-radius: 8px;
       height: 10px;
       overflow: hidden;
+      contain: strict;
     }
     .progress-bar {
       width: 0%;
@@ -609,7 +624,7 @@
     </div>
 
     <div class="btn-group" id="controls">
-      <button id="selectFileBtn">📁 Select Images</button>
+      <button id="selectFileBtn">📁 Select Images (Updated!)</button>
       <button id="startBtn" disabled>🚀 Start Processing</button>
       <button id="clearAllBtn">🧹 Clear All</button>
     </div>
