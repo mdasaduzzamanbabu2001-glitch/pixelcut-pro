@@ -34,7 +34,6 @@ const toastBanner = document.getElementById('toastBanner');
 let selectedFiles = []; 
 let fileIdCounter = 0; 
 let isViewVisible = false; 
-let lastProcessingFileId = null;
 
 function showToast(msg, duration = 3500) {
     if (!toastBanner) return;
@@ -46,30 +45,27 @@ function showToast(msg, duration = 3500) {
     }, duration);
 }
 
-// ==========================================================
-// 🖼️ ZERO-LAG SEQUENTIAL GALLERY & UI THUMBNAIL ENGINE
-// ==========================================================
+// Cache for 128x128 gallery thumbnails so 5000x5000px PNGs never lag the UI
 const galleryThumbCache = new Map();
-const thumbPendingQueue = [];
-let isDecodingThumb = false;
-let latestPendingGalleryImages = null;
 
-function decodeImageToThumbnail(src, maxDim = 128) {
+function getLightweightThumbnail(src) {
+    if (galleryThumbCache.has(src)) {
+        return Promise.resolve(galleryThumbCache.get(src));
+    }
     return new Promise((resolve) => {
         const tempImg = new Image();
         tempImg.decoding = 'async';
         tempImg.onload = () => {
             try {
                 const canvas = document.createElement('canvas');
-                const scale = Math.min(maxDim / (tempImg.width || 1), maxDim / (tempImg.height || 1), 1);
-                canvas.width = Math.max(1, Math.round((tempImg.width || 1) * scale));
-                canvas.height = Math.max(1, Math.round((tempImg.height || 1) * scale));
+                const maxDim = 128;
+                const scale = Math.min(maxDim / tempImg.width, maxDim / tempImg.height, 1);
+                canvas.width = Math.max(1, Math.round(tempImg.width * scale));
+                canvas.height = Math.max(1, Math.round(tempImg.height * scale));
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(tempImg, 0, 0, canvas.width, canvas.height);
                 const thumbDataUrl = canvas.toDataURL('image/webp', 0.85);
-                canvas.width = 0;
-                canvas.height = 0;
-                tempImg.src = '';
+                galleryThumbCache.set(src, thumbDataUrl);
                 resolve(thumbDataUrl);
             } catch (err) {
                 resolve(src);
@@ -78,91 +74,6 @@ function decodeImageToThumbnail(src, maxDim = 128) {
         tempImg.onerror = () => resolve(src);
         tempImg.src = src;
     });
-}
-
-function processNextGalleryThumb() {
-    if (isDecodingThumb || thumbPendingQueue.length === 0) return;
-    // Pause heavy 5000px PNG decoding whenever website view or processing is active
-    if (isViewVisible || controls.style.display === 'none') return;
-
-    isDecodingThumb = true;
-    const { src, imgEl } = thumbPendingQueue.shift();
-
-    if (galleryThumbCache.has(src)) {
-        imgEl.src = galleryThumbCache.get(src);
-        isDecodingThumb = false;
-        setTimeout(processNextGalleryThumb, 0);
-        return;
-    }
-
-    decodeImageToThumbnail(src, 128).then((thumbDataUrl) => {
-        if (galleryThumbCache.size > 48) {
-            const oldestKey = galleryThumbCache.keys().next().value;
-            galleryThumbCache.delete(oldestKey);
-        }
-        galleryThumbCache.set(src, thumbDataUrl);
-        if (imgEl.isConnected) {
-            imgEl.src = thumbDataUrl;
-        }
-    }).finally(() => {
-        isDecodingThumb = false;
-        setTimeout(processNextGalleryThumb, 16);
-    });
-}
-
-function renderGalleryImages(images) {
-    thumbPendingQueue.length = 0;
-    galleryGrid.innerHTML = '';
-
-    if (!images || images.length === 0) {
-        galleryGrid.innerHTML = '<p style="font-size: 12px; color: #64748b; text-align: center; grid-column: 1 / -1; margin: 20px 0;">No processed transparent PNGs found yet.</p>';
-        return;
-    }
-
-    const fragment = document.createDocumentFragment();
-    images.forEach(src => {
-        const img = document.createElement('img');
-        img.decoding = 'async';
-        img.loading = 'lazy';
-        img.title = "Click to show in folder";
-        img.onclick = () => {
-            if (window.api.openFileLocation) {
-                window.api.openFileLocation(src);
-            }
-        };
-        fragment.appendChild(img);
-
-        if (galleryThumbCache.has(src)) {
-            img.src = galleryThumbCache.get(src);
-        } else {
-            thumbPendingQueue.push({ src, imgEl: img });
-        }
-    });
-    galleryGrid.appendChild(fragment);
-    processNextGalleryThumb();
-}
-
-async function createUiThumbnail(file, fallbackBase64) {
-    try {
-        if (typeof createImageBitmap === 'function') {
-            const bitmap = await createImageBitmap(file);
-            const maxDim = 180;
-            const scale = Math.min(maxDim / (bitmap.width || 1), maxDim / (bitmap.height || 1), 1);
-            const w = Math.max(1, Math.round((bitmap.width || 1) * scale));
-            const h = Math.max(1, Math.round((bitmap.height || 1) * scale));
-            const canvas = document.createElement('canvas');
-            canvas.width = w;
-            canvas.height = h;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(bitmap, 0, 0, w, h);
-            bitmap.close();
-            const thumbUrl = canvas.toDataURL('image/webp', 0.82);
-            canvas.width = 0;
-            canvas.height = 0;
-            return thumbUrl;
-        }
-    } catch (e) {}
-    return decodeImageToThumbnail(fallbackBase64, 180);
 }
 
 // Load gallery automatically on startup
@@ -190,6 +101,7 @@ if (checkUpdateBtn) {
 
 if (window.api.onUpdateAvailable) {
     window.api.onUpdateAvailable((info) => {
+        // যদি ওয়েবসাইট ভিউ ওপেন থাকে, পপআপ দেখানোর জন্য সাময়িকভাবে হাইড করা হবে যেন পপআপ পরিষ্কার দেখা যায়
         if (isViewVisible) {
             setWebsiteViewMode(false);
         }
@@ -252,13 +164,6 @@ function setWebsiteViewMode(visible) {
 
     requestAnimationFrame(() => {
         window.api.toggleView(isViewVisible);
-        if (!isViewVisible && latestPendingGalleryImages) {
-            const pending = latestPendingGalleryImages;
-            latestPendingGalleryImages = null;
-            renderGalleryImages(pending);
-        } else if (!isViewVisible) {
-            processNextGalleryThumb();
-        }
     });
 }
 
@@ -313,17 +218,10 @@ async function processSelectedFiles(filesArray) {
                 reader.onload = (event) => resolve(event.target.result);
                 reader.readAsDataURL(file);
             });
-            const thumbUrl = await createUiThumbnail(file, base64);
             
             const currentId = 'thumb-' + fileIdCounter++; 
             
-            selectedFiles.push({
-                id: currentId,
-                name: file.name,
-                type: file.type,
-                data: base64,
-                thumb: thumbUrl
-            });
+            selectedFiles.push({ id: currentId, name: file.name, type: file.type, data: base64 });
             
             const wrapper = document.createElement('div');
             wrapper.className = 'thumb-wrapper';
@@ -331,7 +229,7 @@ async function processSelectedFiles(filesArray) {
             
             const img = document.createElement('img');
             img.decoding = 'async';
-            img.src = thumbUrl;
+            img.src = base64;
             img.title = file.name;
             
             const delBtn = document.createElement('div');
@@ -399,13 +297,31 @@ refreshGalleryBtn.addEventListener('click', () => {
     window.api.refreshGallery();
 });
 
-window.api.onGalleryData((images) => {
-    if (isViewVisible || controls.style.display === 'none') {
-        latestPendingGalleryImages = images;
+window.api.onGalleryData(async (images) => {
+    galleryGrid.innerHTML = ''; 
+    if (!images || images.length === 0) {
+        galleryGrid.innerHTML = '<p style="font-size: 12px; color: #64748b; text-align: center; grid-column: 1 / -1; margin: 20px 0;">No processed transparent PNGs found yet.</p>';
         return;
     }
-    latestPendingGalleryImages = null;
-    renderGalleryImages(images);
+
+    const fragment = document.createDocumentFragment();
+    images.forEach(src => {
+        const img = document.createElement('img');
+        img.decoding = 'async';
+        img.loading = 'lazy';
+        img.title = "Click to show in folder";
+        img.onclick = () => {
+            if (window.api.openFileLocation) {
+                window.api.openFileLocation(src);
+            }
+        };
+        fragment.appendChild(img);
+
+        getLightweightThumbnail(src).then(thumbSrc => {
+            img.src = thumbSrc;
+        });
+    });
+    galleryGrid.appendChild(fragment);
 });
 
 function startProcessMode(title, isRemoveBg) {
@@ -424,11 +340,9 @@ function startProcessMode(title, isRemoveBg) {
     scannerLine.style.background = '#38bdf8'; 
 
     if (isRemoveBg && selectedFiles.length > 0) {
-        lastProcessingFileId = selectedFiles[0].id;
-        processingImage.src = selectedFiles[0].thumb || selectedFiles[0].data; 
+        processingImage.src = selectedFiles[0].data; 
         processingPreviewContainer.style.display = 'flex';
     } else {
-        lastProcessingFileId = null;
         processingPreviewContainer.style.display = 'none';
     }
 }
@@ -436,17 +350,7 @@ function startProcessMode(title, isRemoveBg) {
 startBtn.addEventListener('click', () => {
     if (selectedFiles.length === 0) return;
     startProcessMode("⚙️ Initializing Batch Processor...", true);
-    const payload = selectedFiles.map(f => ({
-        id: f.id,
-        name: f.name,
-        type: f.type,
-        data: f.data
-    }));
-    requestAnimationFrame(() => {
-        setTimeout(() => {
-            window.api.startBatchTask(payload);
-        }, 20);
-    });
+    window.api.startBatchTask(selectedFiles); 
 });
 
 window.api.onProgressUpdate((data) => {
@@ -463,10 +367,7 @@ window.api.onProgressUpdate((data) => {
         const activeFile = selectedFiles[data.activeIndex];
         
         if (activeFile) {
-            if (lastProcessingFileId !== activeFile.id) {
-                lastProcessingFileId = activeFile.id;
-                processingImage.src = activeFile.thumb || activeFile.data;
-            }
+            processingImage.src = activeFile.data;
             
             if (data.isCompleted) {
                 const thumbWrapper = document.getElementById('wrapper-' + activeFile.id);
@@ -500,9 +401,8 @@ window.api.onStatusUpdate((message) => {
         }
         
         setTimeout(() => {
+            setWebsiteViewMode(false);
             selectedFiles = [];
-            lastProcessingFileId = null;
-            processingImage.src = '';
             filePreviewBox.innerHTML = '';
             filePreviewBox.style.display = 'none';
             startBtn.disabled = true;
