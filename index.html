@@ -1,928 +1,459 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Pro Studio Tool</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg-base: #f2f6fb;
-      --bg-glow-1: rgba(51, 144, 236, 0.11);
-      --bg-glow-2: rgba(99, 102, 241, 0.08);
-      --bg-dot: rgba(15, 23, 42, 0.045);
-
-      --card-bg: #ffffff;
-      --card-border: rgba(15, 23, 42, 0.08);
-      --card-shadow: 0 24px 60px -16px rgba(15, 35, 66, 0.12), 0 4px 16px -4px rgba(51, 144, 236, 0.07);
-
-      --surface-subtle: #f7f9fc;
-      --surface-hover: #eef5fc;
-      --border-subtle: #e6ecf4;
-      --divider: #edf2f7;
-
-      --text-primary: #17202e;
-      --text-secondary: #5a6778;
-      --text-muted: #8492a6;
-
-      --accent: #2481cc;
-      --accent-bright: #3390ec;
-      --accent-soft: #ebf5ff;
-      --accent-border: rgba(36, 129, 204, 0.22);
-
-      --btn-bg: #ffffff;
-      --btn-border: #dce5f0;
-      --btn-text: #1e293b;
-      --btn-icon: #526275;
-
-      --btn-disabled-bg: #f1f5f9;
-      --btn-disabled-border: #e2e8f0;
-      --btn-disabled-text: #94a3b8;
-
-      --danger-bg: #fff5f5;
-      --danger-border: #fecaca;
-      --danger-text: #dc2626;
-
-      --switch-track: #cbd5e1;
-      --switch-thumb: #ffffff;
-
-      --checker-a: rgba(15, 23, 42, 0.045);
-      --checker-b: #ffffff;
-
-      --modal-backdrop: rgba(15, 23, 42, 0.45);
-      --toast-bg: #ffffff;
-      --toast-text: #17202e;
-    }
-
-    body.dark-theme {
-      --bg-base: #0e1621;
-      --bg-glow-1: rgba(64, 167, 227, 0.12);
-      --bg-glow-2: rgba(59, 130, 246, 0.10);
-      --bg-dot: rgba(255, 255, 255, 0.035);
-
-      --card-bg: #17212b;
-      --card-border: rgba(255, 255, 255, 0.08);
-      --card-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
-
-      --surface-subtle: #111923;
-      --surface-hover: #232e3c;
-      --border-subtle: rgba(255, 255, 255, 0.08);
-      --divider: rgba(255, 255, 255, 0.07);
-
-      --text-primary: #f1f5f9;
-      --text-secondary: #9fb0c3;
-      --text-muted: #6c7e93;
-
-      --accent: #40a7e3;
-      --accent-bright: #52b4ed;
-      --accent-soft: rgba(64, 167, 227, 0.14);
-      --accent-border: rgba(64, 167, 227, 0.32);
-
-      --btn-bg: #232e3c;
-      --btn-border: rgba(255, 255, 255, 0.1);
-      --btn-text: #eef4fa;
-      --btn-icon: #8ea4bc;
-
-      --btn-disabled-bg: rgba(17, 25, 35, 0.65);
-      --btn-disabled-border: rgba(255, 255, 255, 0.06);
-      --btn-disabled-text: rgba(255, 255, 255, 0.28);
-
-      --danger-bg: rgba(239, 68, 68, 0.12);
-      --danger-border: rgba(239, 68, 68, 0.35);
-      --danger-text: #f87171;
-
-      --switch-track: #3390ec;
-      --switch-thumb: #ffffff;
-
-      --checker-a: rgba(255, 255, 255, 0.06);
-      --checker-b: #111923;
-
-      --modal-backdrop: rgba(6, 10, 19, 0.8);
-      --toast-bg: #17212b;
-      --toast-text: #f8fafc;
-    }
-
-    * {
-      box-sizing: border-box;
-      user-select: none;
-      font-family: 'Poppins', sans-serif;
-    }
-
-    body {
-      margin: 0;
-      padding: 0;
-      height: 100vh;
-      width: 100vw;
-      overflow: hidden;
-      background-color: var(--bg-base);
-      background-image:
-        radial-gradient(circle at 14% 18%, var(--bg-glow-1) 0%, transparent 45%),
-        radial-gradient(circle at 86% 82%, var(--bg-glow-2) 0%, transparent 45%),
-        radial-gradient(var(--bg-dot) 1px, transparent 1px);
-      background-size: 100% 100%, 100% 100%, 24px 24px;
-      color: var(--text-primary);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      transition: background-color 0.22s ease, color 0.22s ease;
-    }
-
-    .glass-card {
-      position: relative;
-      z-index: 10;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 22px;
-      padding: 26px 32px;
-      box-shadow: var(--card-shadow);
-      text-align: center;
-      width: 92%;
-      max-width: 780px;
-      display: flex;
-      flex-direction: column;
-      transition: border-color 0.18s ease, background-color 0.22s ease, box-shadow 0.22s ease;
-    }
-
-    .header-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid var(--divider);
-      gap: 12px;
-    }
-
-    .brand-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .brand-icon-box {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-      background: var(--accent-soft);
-      border: 1px solid var(--accent-border);
-      color: var(--accent);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    h2 {
-      margin: 0;
-      font-size: 19px;
-      font-weight: 700;
-      letter-spacing: -0.2px;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      white-space: nowrap;
-    }
-
-    h2 span.brand-gradient {
-      background: linear-gradient(135deg, var(--accent-bright) 0%, #1d5fd6 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .version-badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 2px 9px;
-      border-radius: 20px;
-      background: var(--accent-soft);
-      border: 1px solid var(--accent-border);
-      color: var(--accent);
-      letter-spacing: 0.2px;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: nowrap;
-    }
-
-    body.view-active {
-      justify-content: flex-start;
-      padding-top: 8px;
-    }
-    body.view-active .glass-card {
-      width: 98%;
-      max-width: 985px;
-      height: 194px;
-      padding: 12px 22px;
-      border-radius: 16px;
-      justify-content: space-between;
-    }
-    body.view-active .header-row {
-      margin-bottom: 6px;
-      padding-bottom: 8px;
-    }
-    body.view-active .brand-icon-box {
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-    }
-    body.view-active h2 {
-      font-size: 16px;
-    }
-
-    body.view-active .gallery-container,
-    body.view-active .app-footer {
-      position: absolute !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-      pointer-events: none !important;
-      height: 0 !important;
-      width: 0 !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      overflow: hidden !important;
-      border: 0 !important;
-      z-index: -1 !important;
-    }
-
-    body.view-active .hud-main-workspace {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      height: 120px;
-    }
-    body.view-active .file-preview-box {
-      margin-bottom: 0;
-      max-height: 110px;
-      padding: 8px 12px;
-      flex: 1;
-    }
-    body.view-active .processing-preview-container {
-      margin-bottom: 0;
-      flex-shrink: 0;
-    }
-    body.view-active .processing-preview-container img {
-      width: 84px;
-      height: 84px;
-    }
-    body.view-active .scanner-line {
-      width: 90px;
-      --scan-travel: 76px;
-    }
-    body.view-active .progress-wrapper {
-      margin-top: 0;
-      flex: 1.2;
-    }
-    body.view-active .btn-group {
-      margin-bottom: 0;
-    }
-
-    .file-preview-box {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 18px;
-      background: var(--surface-subtle);
-      padding: 14px 18px;
-      border-radius: 14px;
-      border: 1px solid var(--border-subtle);
-      flex-wrap: wrap;
-      gap: 12px;
-      max-height: 155px;
-      overflow-y: auto;
-    }
-    .file-preview-box::-webkit-scrollbar { width: 5px; }
-    .file-preview-box::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 5px; }
-
-    .thumb-wrapper {
-      position: relative;
-      display: inline-block;
-      transition: transform 0.15s ease;
-    }
-    .thumb-wrapper:hover {
-      transform: translateY(-2px);
-    }
-    .thumb-wrapper img {
-      width: 52px;
-      height: 52px;
-      border-radius: 10px;
-      object-fit: contain;
-      background: var(--card-bg);
-      border: 1.5px solid var(--accent-border);
-      display: block;
-    }
-    .delete-btn {
-      position: absolute;
-      top: -6px;
-      right: -6px;
-      background: #ef4444;
-      color: white;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: transform 0.15s ease, background-color 0.15s ease;
-      border: 1.5px solid var(--card-bg);
-      z-index: 10;
-    }
-    .delete-btn:hover { background: #dc2626; transform: scale(1.12); }
-
-    .checkmark {
-      position: absolute;
-      inset: 0;
-      background: rgba(16, 185, 129, 0.85);
-      border-radius: 10px;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 5;
-      color: #ffffff;
-    }
-    .thumb-wrapper.completed .checkmark {
-      display: flex;
-      border: 1.5px solid #10b981;
-    }
-    .thumb-wrapper.completed .delete-btn { display: none; }
-
-    .processing-preview-container {
-      display: none;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-      margin-bottom: 16px;
-    }
-    .processing-image-wrapper {
-      position: relative;
-      padding: 5px;
-      border-radius: 14px;
-      border: 1.5px solid var(--accent-border);
-      background: var(--surface-subtle);
-      overflow: hidden;
-    }
-    .processing-preview-container img {
-      width: 112px;
-      height: 112px;
-      border-radius: 10px;
-      object-fit: contain;
-      display: block;
-    }
-    .scanner-line {
-      position: absolute;
-      top: 5px;
-      left: 50%;
-      width: 116px;
-      height: 3px;
-      background: linear-gradient(90deg, transparent, var(--accent-bright), #ffffff, var(--accent-bright), transparent);
-      box-shadow: 0 0 10px var(--accent-bright);
-      border-radius: 4px;
-      will-change: transform;
-      --scan-travel: 105px;
-      animation: scanLaser 1.6s ease-in-out infinite;
-    }
-    @keyframes scanLaser {
-      0%, 100% { transform: translate3d(-50%, 0, 0); }
-      50% { transform: translate3d(-50%, var(--scan-travel, 105px), 0); }
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-
-    button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 10px 22px;
-      color: var(--btn-text);
-      background: var(--btn-bg);
-      border: 1px solid var(--btn-border);
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.2px;
-      cursor: pointer;
-      transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
-    }
-    button svg {
-      color: var(--btn-icon);
-      flex-shrink: 0;
-      transition: color 0.15s ease;
-    }
-    button:hover:not(:disabled) {
-      transform: translateY(-1px);
-      background: var(--surface-hover);
-      border-color: var(--accent-border);
-      color: var(--accent);
-    }
-    button:hover:not(:disabled) svg {
-      color: var(--accent);
-    }
-    button:active:not(:disabled) {
-      transform: translateY(0px);
-    }
-    button:disabled {
-      background: var(--btn-disabled-bg);
-      border-color: var(--btn-disabled-border);
-      color: var(--btn-disabled-text);
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-    button:disabled svg {
-      color: var(--btn-disabled-text);
-    }
-
-    #selectFileBtn {
-      border-color: var(--accent-border);
-      box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);
-    }
-    #selectFileBtn svg {
-      color: var(--accent);
-    }
-
-    #startBtn:not(:disabled) {
-      background: linear-gradient(135deg, #3390ec 0%, #246bfd 100%);
-      color: #ffffff;
-      border-color: transparent;
-      box-shadow: 0 8px 22px -4px rgba(36, 107, 253, 0.42);
-    }
-    #startBtn:not(:disabled) svg {
-      color: #ffffff;
-    }
-    #startBtn:not(:disabled):hover {
-      background: linear-gradient(135deg, #3f9bf4 0%, #2f74ff 100%);
-      color: #ffffff;
-      box-shadow: 0 10px 26px -4px rgba(36, 107, 253, 0.52);
-    }
-    #startBtn:not(:disabled):hover svg {
-      color: #ffffff;
-    }
-
-    #clearAllBtn {
-      display: none;
-      background: var(--danger-bg);
-      border-color: var(--danger-border);
-      color: var(--danger-text);
-    }
-    #clearAllBtn svg {
-      color: var(--danger-text);
-    }
-    #clearAllBtn:hover:not(:disabled) {
-      background: #fee2e2;
-      border-color: #f87171;
-      color: #b91c1c;
-    }
-    body.dark-theme #clearAllBtn:hover:not(:disabled) {
-      background: rgba(239, 68, 68, 0.22);
-      color: #fca5a5;
-    }
-
-    .header-pill-btn {
-      padding: 6px 12px;
-      font-size: 11.5px;
-      font-weight: 500;
-      border-radius: 10px;
-      background: var(--surface-subtle);
-      border-color: var(--border-subtle);
-      color: var(--text-secondary);
-      gap: 6px;
-      white-space: nowrap;
-    }
-
-    .tg-switch {
-      width: 28px;
-      height: 16px;
-      border-radius: 999px;
-      background: var(--switch-track);
-      position: relative;
-      display: inline-block;
-      margin-left: 2px;
-      transition: background-color 0.2s ease;
-    }
-    .tg-switch::after {
-      content: '';
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: var(--switch-thumb);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
-      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    body.dark-theme .tg-switch::after {
-      transform: translateX(12px);
-    }
-
-    .progress-wrapper {
-      display: none;
-      margin-top: 8px;
-      text-align: left;
-      background: var(--surface-subtle);
-      padding: 12px 16px;
-      border-radius: 12px;
-      border: 1px solid var(--border-subtle);
-    }
-    .progress-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    .progress-text {
-      font-size: 12.5px;
-      font-weight: 600;
-      color: var(--accent);
-    }
-    .percent-text {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-    .progress-bar-container {
-      width: 100%;
-      background: var(--divider);
-      border-radius: 8px;
-      height: 9px;
-      overflow: hidden;
-    }
-    .progress-bar {
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, #3390ec, #246bfd);
-      transition: width 0.25s ease;
-      border-radius: 8px;
-    }
-
-    .gallery-container {
-      margin-top: 4px;
-      background: var(--surface-subtle);
-      border-radius: 16px;
-      padding: 14px 16px;
-      border: 1px solid var(--border-subtle);
-      max-height: 195px;
-      display: flex;
-      flex-direction: column;
-      contain: content;
-    }
-    .gallery-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--divider);
-      padding-bottom: 9px;
-      margin-bottom: 10px;
-    }
-    .gallery-header h3 {
-      margin: 0;
-      font-size: 12.5px;
-      font-weight: 600;
-      color: var(--text-primary);
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-    }
-    .gallery-header h3 svg {
-      color: var(--accent);
-    }
-    .gallery-header button {
-      font-size: 11px;
-      font-weight: 500;
-      padding: 5px 12px;
-      border-radius: 9px;
-      gap: 5px;
-    }
-    .gallery-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
-      gap: 10px;
-      overflow-y: auto;
-      padding-right: 4px;
-    }
-    .gallery-grid::-webkit-scrollbar { width: 5px; }
-    .gallery-grid::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.4); border-radius: 5px; }
-
-    .gallery-grid img {
-      width: 100%;
-      height: 64px;
-      object-fit: contain;
-      border-radius: 10px;
-      border: 1px solid var(--border-subtle);
-      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-      cursor: pointer;
-      background-color: var(--checker-b);
-      background-image:
-        linear-gradient(45deg, var(--checker-a) 25%, transparent 25%),
-        linear-gradient(-45deg, var(--checker-a) 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, var(--checker-a) 75%),
-        linear-gradient(-45deg, transparent 75%, var(--checker-a) 75%);
-      background-size: 12px 12px;
-      background-position: 0 0, 0 6px, 6px -6px, -6px 0;
-    }
-    .gallery-grid img:hover {
-      transform: scale(1.06);
-      border-color: var(--accent);
-      box-shadow: 0 4px 12px rgba(36, 129, 204, 0.16);
-    }
-
-    .app-footer {
-      margin-top: 16px;
-      padding-top: 10px;
-      border-top: 1px solid var(--divider);
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-    .app-footer strong {
-      color: var(--text-secondary);
-      font-weight: 600;
-    }
-    .app-footer .highlight {
-      color: var(--accent);
-      font-weight: 600;
-    }
-
-    .glass-card.drag-over {
-      border-color: var(--accent-bright) !important;
-      box-shadow: 0 0 0 3px var(--accent-soft), var(--card-shadow) !important;
-      transform: scale(1.01);
-    }
-
-    .update-modal-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      background: var(--modal-backdrop);
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-    .update-modal-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 26px 28px;
-      width: 92%;
-      max-width: 440px;
-      text-align: center;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.28);
-      animation: popIn 0.2s ease-out;
-    }
-    @keyframes popIn {
-      from { transform: scale(0.92); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-    .update-hero-icon {
-      width: 52px;
-      height: 52px;
-      margin: 0 auto 12px auto;
-      border-radius: 16px;
-      background: var(--accent-soft);
-      border: 1px solid var(--accent-border);
-      color: var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .update-modal-title {
-      margin: 0 0 8px 0;
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-    .update-version-pill {
-      display: inline-block;
-      background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(16, 185, 129, 0.35);
-      color: #059669;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 4px 12px;
-      border-radius: 20px;
-      margin-bottom: 12px;
-    }
-    body.dark-theme .update-version-pill {
-      color: #34d399;
-    }
-    .update-notes-box {
-      background: var(--surface-subtle);
-      border: 1px solid var(--border-subtle);
-      border-radius: 12px;
-      padding: 10px 14px;
-      font-size: 12px;
-      color: var(--text-secondary);
-      text-align: left;
-      margin-bottom: 16px;
-      max-height: 90px;
-      overflow-y: auto;
-      line-height: 1.5;
-    }
-    .update-modal-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-    }
-    #confirmUpdateBtn {
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: #ffffff;
-      border: none;
-      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.32);
-      flex: 1;
-    }
-    #confirmUpdateBtn svg {
-      color: #ffffff;
-    }
-    #confirmUpdateBtn:hover:not(:disabled) {
-      background: linear-gradient(135deg, #059669, #047857);
-      color: #ffffff;
-    }
-    #closeUpdateModalBtn {
-      background: var(--surface-subtle);
-      color: var(--text-secondary);
-    }
-    .toast-banner {
-      position: fixed;
-      bottom: 16px;
-      right: 16px;
-      z-index: 9998;
-      background: var(--toast-bg);
-      border: 1px solid var(--accent-border);
-      color: var(--toast-text);
-      padding: 10px 16px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 500;
-      display: none;
-      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
-    }
-  </style>
-</head>
-<body>
-
-  <div class="glass-card" id="mainHudCard">
-    <div class="header-row">
-      <div class="brand-group">
-        <span class="brand-icon-box" aria-hidden="true">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 3l2 5.5L19.5 10.5 14 12.5 12 18l-2-5.5L4.5 10.5 10 8.5 12 3z"/>
-          </svg>
-        </span>
-        <h2>
-          <span class="brand-gradient">Pixelcut Studio</span> Pro
-          <span class="version-badge" id="appVersionBadge">v1.0.0</span>
-        </h2>
-      </div>
-
-      <div class="header-actions">
-        <button id="themeToggleBtn" class="header-pill-btn" title="Switch Night Mode">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-          </svg>
-          <span id="themeToggleLabel">Night</span>
-          <span class="tg-switch" aria-hidden="true"></span>
-        </button>
-
-        <button id="checkUpdateBtn" class="header-pill-btn" title="Check for latest online update">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-            <path d="M3 3v5h5"/>
-            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
-            <path d="M16 16h5v5"/>
-          </svg>
-          <span>Update</span>
-        </button>
-
-        <button id="toggleViewBtn" class="header-pill-btn">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9"/>
-            <path d="M3.6 9h16.8M3.6 15h16.8"/>
-            <path d="M12 3a14.5 14.5 0 0 1 0 18M12 3a14.5 14.5 0 0 0 0 18"/>
-          </svg>
-          <span>Show Website / Login</span>
-        </button>
-      </div>
-    </div>
-
-    <input type="file" id="fileInput" accept="image/*" multiple style="display: none;">
-
-    <div class="hud-main-workspace">
-      <div class="processing-preview-container" id="processingPreviewContainer">
-        <div class="processing-image-wrapper">
-          <img id="processingImage" src="" alt="Processing">
-          <div class="scanner-line" id="scannerLine"></div>
-        </div>
-      </div>
-
-      <div class="file-preview-box" id="filePreviewBox"></div>
-
-      <div class="progress-wrapper" id="progressWrapper">
-        <div class="progress-header-row">
-          <div class="progress-text" id="progressText">Initializing Workflow...</div>
-          <div class="percent-text" id="percentText">0%</div>
-        </div>
-        <div class="progress-bar-container">
-          <div class="progress-bar" id="progressBar"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="btn-group" id="controls">
-      <button id="selectFileBtn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
-        </svg>
-        <span>Select Images</span>
-      </button>
-
-      <button id="startBtn" disabled>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-        </svg>
-        <span>Start Processing</span>
-      </button>
-
-      <button id="clearAllBtn">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 6h18"/>
-          <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/>
-          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-        </svg>
-        <span>Clear All</span>
-      </button>
-    </div>
-
-    <div class="gallery-container" id="galleryContainer">
-      <div class="gallery-header">
-        <h3>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="4" width="18" height="16" rx="2.5"/>
-            <circle cx="8.5" cy="9.5" r="1.5"/>
-            <path d="M21 15l-4.5-4.5a1.5 1.5 0 0 0-2.1 0L6 19"/>
-          </svg>
-          <span>Processed Output Gallery</span>
-        </h3>
-        <button id="refreshGalleryBtn">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-            <path d="M3 3v5h5"/>
-            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
-            <path d="M16 16h5v5"/>
-          </svg>
-          <span>Refresh</span>
-        </button>
-      </div>
-      <div class="gallery-grid" id="galleryGrid">
-        <p style="font-size: 12px; color: var(--text-muted); text-align: center; width: 100%; grid-column: 1 / -1; margin: 20px 0;">
-          Ready! Click "Refresh" to view saved transparent PNGs...
-        </p>
-      </div>
-    </div>
-
-    <div class="app-footer">
-      © 2026 All Rights Reserved by <strong>Md Asaduzzaman Babu</strong> •
-      <span class="highlight">5000×5000 px (300 PPI) Auto-Trim Engine</span>
-    </div>
-  </div>
-
-  <div class="update-modal-overlay" id="updateModalOverlay">
-    <div class="update-modal-card">
-      <div class="update-hero-icon" aria-hidden="true">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 16V4"/>
-          <path d="M7 9l5-5 5 5"/>
-          <path d="M20 16v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2"/>
-        </svg>
-      </div>
-      <h3 class="update-modal-title">New App Update Available!</h3>
-      <div class="update-version-pill" id="updateVersionPill">v1.0.0 ➔ v1.0.1</div>
-      <div class="update-notes-box" id="updateNotesBox">
-        New features and improvements are ready to sync!
-      </div>
-      <div id="updateStatusText" style="font-size: 12px; color: var(--accent); margin-bottom: 12px; display: none;">
-        Syncing latest files...
-      </div>
-      <div class="update-modal-actions">
-        <button id="confirmUpdateBtn">Update &amp; Restart Now</button>
-        <button id="closeUpdateModalBtn">Later</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="toast-banner" id="toastBanner"></div>
-
-  <script src="renderer.js"></script>
-</body>
-</html>
+const selectFileBtn = document.getElementById('selectFileBtn');
+const fileInput = document.getElementById('fileInput');
+const startBtn = document.getElementById('startBtn');
+const clearAllBtn = document.getElementById('clearAllBtn');
+const toggleViewBtn = document.getElementById('toggleViewBtn');
+const checkUpdateBtn = document.getElementById('checkUpdateBtn');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+const appVersionBadge = document.getElementById('appVersionBadge');
+
+const controls = document.getElementById('controls');
+const progressWrapper = document.getElementById('progressWrapper');
+const progressText = document.getElementById('progressText');
+const progressBar = document.getElementById('progressBar');
+const percentText = document.getElementById('percentText');
+
+const refreshGalleryBtn = document.getElementById('refreshGalleryBtn');
+const galleryGrid = document.getElementById('galleryGrid');
+const galleryContainer = document.getElementById('galleryContainer');
+
+const filePreviewBox = document.getElementById('filePreviewBox');
+const processingPreviewContainer = document.getElementById('processingPreviewContainer');
+const processingImage = document.getElementById('processingImage');
+const scannerLine = document.getElementById('scannerLine');
+const glassCard = document.querySelector('.glass-card');
+
+// Update Modal Elements
+const updateModalOverlay = document.getElementById('updateModalOverlay');
+const updateVersionPill = document.getElementById('updateVersionPill');
+const updateNotesBox = document.getElementById('updateNotesBox');
+const updateStatusText = document.getElementById('updateStatusText');
+const confirmUpdateBtn = document.getElementById('confirmUpdateBtn');
+const closeUpdateModalBtn = document.getElementById('closeUpdateModalBtn');
+const toastBanner = document.getElementById('toastBanner');
+
+let selectedFiles = [];
+let fileIdCounter = 0;
+let isViewVisible = false;
+
+// ==========================================================
+// 🎨 TELEGRAM-STYLE VECTOR SVG ICONS (NO EMOJIS)
+// ==========================================================
+const SVG_ICONS = {
+    globe: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8"/><path d="M12 3a14.5 14.5 0 0 1 0 18M12 3a14.5 14.5 0 0 0 0 18"/></svg>`,
+    eyeOff: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`,
+    close: `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+    check: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+    bolt: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+    refresh: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>`
+};
+
+function stripLeadingEmojis(str) {
+    return String(str || '').replace(/^[\u{1F300}-\u{1FAFF}\u2600-\u27BF\s]+/u, '').trim();
+}
+
+// ==========================================================
+// 🌗 WHITE / NIGHT THEME TOGGLE (TELEGRAM STYLE)
+// ==========================================================
+function applyTheme(theme) {
+    const isDark = theme === 'dark';
+    document.body.classList.toggle('dark-theme', isDark);
+    localStorage.setItem('pixelcut_theme', isDark ? 'dark' : 'light');
+}
+
+applyTheme(localStorage.getItem('pixelcut_theme') || 'light');
+
+if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+        const nextTheme = document.body.classList.contains('dark-theme') ? 'light' : 'dark';
+        applyTheme(nextTheme);
+    });
+}
+
+function showToast(msg, duration = 3500) {
+    if (!toastBanner) return;
+    toastBanner.innerText = stripLeadingEmojis(msg);
+    toastBanner.style.display = 'block';
+    clearTimeout(window.__toastTimer);
+    window.__toastTimer = setTimeout(() => {
+        toastBanner.style.display = 'none';
+    }, duration);
+}
+
+// Cache for 128x128 thumbnails so 5000x5000px PNGs never lag the UI
+const galleryThumbCache = new Map();
+
+function getLightweightThumbnail(src) {
+    if (galleryThumbCache.has(src)) {
+        return Promise.resolve(galleryThumbCache.get(src));
+    }
+    return new Promise((resolve) => {
+        const tempImg = new Image();
+        tempImg.decoding = 'async';
+        tempImg.onload = () => {
+            try {
+                const canvas = document.createElement('canvas');
+                const maxDim = 128;
+                const scale = Math.min(maxDim / tempImg.width, maxDim / tempImg.height, 1);
+                canvas.width = Math.max(1, Math.round(tempImg.width * scale));
+                canvas.height = Math.max(1, Math.round(tempImg.height * scale));
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(tempImg, 0, 0, canvas.width, canvas.height);
+                const thumbDataUrl = canvas.toDataURL('image/webp', 0.85);
+                galleryThumbCache.set(src, thumbDataUrl);
+                resolve(thumbDataUrl);
+            } catch (err) {
+                resolve(src);
+            }
+        };
+        tempImg.onerror = () => resolve(src);
+        tempImg.src = src;
+    });
+}
+
+// Load gallery automatically on startup
+window.addEventListener('DOMContentLoaded', () => {
+    window.api.refreshGallery();
+});
+
+// ==========================================================
+// 🚀 LIVE AUTO-UPDATE POPUP LOGIC
+// ==========================================================
+if (window.api.onAppVersion) {
+    window.api.onAppVersion((ver) => {
+        if (appVersionBadge && ver) {
+            appVersionBadge.innerText = `v${ver}`;
+        }
+    });
+}
+
+if (checkUpdateBtn) {
+    checkUpdateBtn.addEventListener('click', () => {
+        showToast("Checking online for updates...");
+        window.api.checkForUpdate(true);
+    });
+}
+
+if (window.api.onUpdateAvailable) {
+    window.api.onUpdateAvailable((info) => {
+        if (isViewVisible) {
+            setWebsiteViewMode(false);
+        }
+        updateVersionPill.innerText = `v${info.currentVersion} → v${info.newVersion}`;
+        updateNotesBox.innerText = stripLeadingEmojis(info.notes) || "New features and bug fixes are ready to install!";
+        updateStatusText.style.display = 'none';
+        confirmUpdateBtn.disabled = false;
+        confirmUpdateBtn.innerHTML = `${SVG_ICONS.bolt}<span>Update &amp; Restart Now</span>`;
+        closeUpdateModalBtn.style.display = 'inline-flex';
+        updateModalOverlay.style.display = 'flex';
+    });
+}
+
+if (confirmUpdateBtn) {
+    confirmUpdateBtn.addEventListener('click', () => {
+        confirmUpdateBtn.disabled = true;
+        confirmUpdateBtn.innerText = "Updating...";
+        closeUpdateModalBtn.style.display = 'none';
+        updateStatusText.style.display = 'block';
+        updateStatusText.style.color = 'var(--accent)';
+        updateStatusText.innerText = "Downloading latest code files...";
+        window.api.startLiveUpdate();
+    });
+}
+
+if (closeUpdateModalBtn) {
+    closeUpdateModalBtn.addEventListener('click', () => {
+        updateModalOverlay.style.display = 'none';
+    });
+}
+
+if (window.api.onUpdateStatus) {
+    window.api.onUpdateStatus((status) => {
+        if (status.type === 'progress') {
+            updateStatusText.style.display = 'block';
+            updateStatusText.style.color = 'var(--accent)';
+            updateStatusText.innerText = stripLeadingEmojis(status.message);
+        } else if (status.type === 'error') {
+            updateStatusText.style.display = 'block';
+            updateStatusText.style.color = '#ef4444';
+            updateStatusText.innerText = stripLeadingEmojis(status.message);
+            confirmUpdateBtn.disabled = false;
+            confirmUpdateBtn.innerHTML = `${SVG_ICONS.refresh}<span>Retry Update</span>`;
+            closeUpdateModalBtn.style.display = 'inline-flex';
+        } else if (status.type === 'toast') {
+            showToast(status.message, 4000);
+        }
+    });
+}
+
+// ==========================================================
+// ⚡ INSTANT, FRAME-SYNCED WEBSITE POPUP TOGGLE
+// ==========================================================
+function setWebsiteViewMode(visible) {
+    if (isViewVisible === visible) return;
+    isViewVisible = visible;
+
+    document.body.classList.toggle('view-active', isViewVisible);
+    toggleViewBtn.innerHTML = isViewVisible
+        ? `${SVG_ICONS.eyeOff}<span>Hide Website</span>`
+        : `${SVG_ICONS.globe}<span>Show Website / Login</span>`;
+
+    requestAnimationFrame(() => {
+        window.api.toggleView(isViewVisible);
+    });
+}
+
+toggleViewBtn.addEventListener('click', () => {
+    setWebsiteViewMode(!isViewVisible);
+});
+
+selectFileBtn.addEventListener('click', () => fileInput.click());
+
+clearAllBtn.addEventListener('click', () => {
+    selectedFiles = [];
+    filePreviewBox.innerHTML = '';
+    updateQueueText();
+});
+
+function updateQueueText() {
+    let textEl = document.getElementById('previewCountText');
+    if (!textEl) {
+        textEl = document.createElement('span');
+        textEl.id = 'previewCountText';
+        textEl.style.color = 'var(--accent)';
+        textEl.style.fontSize = '12px';
+        textEl.style.fontWeight = '600';
+        textEl.style.width = '100%';
+        textEl.style.marginTop = '4px';
+        filePreviewBox.appendChild(textEl);
+    }
+
+    textEl.innerText = `${selectedFiles.length} images ready in queue`;
+
+    if (selectedFiles.length === 0) {
+        filePreviewBox.style.display = 'none';
+        startBtn.disabled = true;
+        clearAllBtn.style.display = 'none';
+    } else {
+        filePreviewBox.style.display = 'flex';
+        startBtn.disabled = false;
+        clearAllBtn.style.display = 'inline-flex';
+    }
+}
+
+async function processSelectedFiles(filesArray) {
+    if (filesArray.length > 0) {
+        const existingText = document.getElementById('previewCountText');
+        if (existingText) existingText.remove();
+
+        const imageFiles = filesArray.filter(file => file.type.startsWith('image/'));
+
+        for (let file of imageFiles) {
+            const base64 = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (event) => resolve(event.target.result);
+                reader.readAsDataURL(file);
+            });
+
+            const thumbUrl = await getLightweightThumbnail(base64);
+            const currentId = 'thumb-' + fileIdCounter++;
+
+            selectedFiles.push({ id: currentId, name: file.name, type: file.type, data: base64, thumb: thumbUrl });
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'thumb-wrapper';
+            wrapper.id = 'wrapper-' + currentId;
+
+            const img = document.createElement('img');
+            img.decoding = 'async';
+            img.src = thumbUrl;
+            img.title = file.name;
+
+            const delBtn = document.createElement('div');
+            delBtn.className = 'delete-btn';
+            delBtn.innerHTML = SVG_ICONS.close;
+            delBtn.title = "Remove from queue";
+
+            const checkmark = document.createElement('div');
+            checkmark.className = 'checkmark';
+            checkmark.innerHTML = SVG_ICONS.check;
+
+            delBtn.onclick = () => {
+                selectedFiles = selectedFiles.filter(f => f.id !== currentId);
+                wrapper.remove();
+                updateQueueText();
+            };
+
+            wrapper.appendChild(img);
+            wrapper.appendChild(checkmark);
+            wrapper.appendChild(delBtn);
+            filePreviewBox.appendChild(wrapper);
+        }
+        updateQueueText();
+    }
+}
+
+fileInput.addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files);
+    await processSelectedFiles(files);
+    fileInput.value = '';
+});
+
+// ==========================================================
+// 🔥 DRAG AND DROP LOGIC
+// ==========================================================
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    document.body.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    }, false);
+});
+
+['dragenter', 'dragover'].forEach(eventName => {
+    glassCard.addEventListener(eventName, () => {
+        glassCard.classList.add('drag-over');
+    }, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    glassCard.addEventListener(eventName, () => {
+        glassCard.classList.remove('drag-over');
+    }, false);
+});
+
+glassCard.addEventListener('drop', async (e) => {
+    const files = Array.from(e.dataTransfer.files);
+    await processSelectedFiles(files);
+});
+
+// ==========================================================
+// 🚀 WORKFLOW & GALLERY LOGIC
+// ==========================================================
+refreshGalleryBtn.addEventListener('click', () => {
+    galleryGrid.innerHTML = '<p style="font-size: 12px; color: var(--accent); text-align: center; grid-column: 1 / -1; margin: 20px 0;">Loading saved PNGs...</p>';
+    window.api.refreshGallery();
+});
+
+window.api.onGalleryData(async (images) => {
+    galleryGrid.innerHTML = '';
+    if (!images || images.length === 0) {
+        galleryGrid.innerHTML = '<p style="font-size: 12px; color: var(--text-muted); text-align: center; grid-column: 1 / -1; margin: 20px 0;">No processed transparent PNGs found yet.</p>';
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    images.forEach(src => {
+        const img = document.createElement('img');
+        img.decoding = 'async';
+        img.loading = 'lazy';
+        img.title = "Click to show in folder";
+        img.onclick = () => {
+            if (window.api.openFileLocation) {
+                window.api.openFileLocation(src);
+            }
+        };
+        fragment.appendChild(img);
+
+        getLightweightThumbnail(src).then(thumbSrc => {
+            img.src = thumbSrc;
+        });
+    });
+    galleryGrid.appendChild(fragment);
+});
+
+function startProcessMode(title, isRemoveBg) {
+    setWebsiteViewMode(true);
+
+    controls.style.display = 'none';
+    galleryContainer.style.display = 'none';
+
+    document.querySelectorAll('.delete-btn').forEach(btn => btn.style.display = 'none');
+
+    progressWrapper.style.display = 'block';
+    progressBar.style.width = '0%';
+    percentText.innerText = '0%';
+    progressText.innerText = stripLeadingEmojis(title);
+    progressText.style.color = 'var(--accent)';
+    scannerLine.style.background = 'linear-gradient(90deg, transparent, var(--accent-bright), #ffffff, var(--accent-bright), transparent)';
+
+    if (isRemoveBg && selectedFiles.length > 0) {
+        processingImage.src = selectedFiles[0].thumb || selectedFiles[0].data;
+        processingPreviewContainer.style.display = 'flex';
+    } else {
+        processingPreviewContainer.style.display = 'none';
+    }
+}
+
+startBtn.addEventListener('click', () => {
+    if (selectedFiles.length === 0) return;
+    startProcessMode("Initializing Batch Processor...", true);
+    const payloadFiles = selectedFiles.map(({ id, name, type, data }) => ({ id, name, type, data }));
+    setTimeout(() => {
+        window.api.startBatchTask(payloadFiles);
+    }, 50);
+});
+
+window.api.onProgressUpdate((data) => {
+    let percent = parseInt(data.percent);
+    if (!isNaN(percent)) {
+        progressBar.style.width = percent + '%';
+        percentText.innerText = percent + '%';
+    }
+    if (data.text) {
+        progressText.innerText = stripLeadingEmojis(data.text);
+    }
+
+    if (data.activeIndex !== undefined && data.activeIndex >= 0) {
+        const activeFile = selectedFiles[data.activeIndex];
+
+        if (activeFile) {
+            processingImage.src = activeFile.thumb || activeFile.data;
+
+            if (data.isCompleted) {
+                const thumbWrapper = document.getElementById('wrapper-' + activeFile.id);
+                if (thumbWrapper) {
+                    thumbWrapper.classList.add('completed');
+                }
+
+                const countText = document.getElementById('previewCountText');
+                if (countText) {
+                    const remaining = selectedFiles.length - (data.activeIndex + 1);
+                    if (remaining > 0) {
+                        countText.innerText = `${remaining} images remaining...`;
+                    } else {
+                        countText.innerText = `All images completed!`;
+                    }
+                }
+            }
+        }
+    }
+});
+
+window.api.onStatusUpdate((message) => {
+    if (message.includes("✅") || message.includes("❌")) {
+        const isSuccess = message.includes("✅");
+        progressText.innerText = stripLeadingEmojis(message);
+        progressText.style.color = isSuccess ? '#10b981' : '#ef4444';
+
+        if (isSuccess) {
+            progressBar.style.width = '100%';
+            percentText.innerText = '100%';
+            scannerLine.style.background = '#10b981';
+        }
+
+        setTimeout(() => {
+            selectedFiles = [];
+            filePreviewBox.innerHTML = '';
+            filePreviewBox.style.display = 'none';
+            startBtn.disabled = true;
+            clearAllBtn.style.display = 'none';
+
+            controls.style.display = 'flex';
+            toggleViewBtn.style.display = 'inline-flex';
+            progressWrapper.style.display = 'none';
+            processingPreviewContainer.style.display = 'none';
+            galleryContainer.style.display = 'flex';
+            window.api.refreshGallery();
+        }, 3000);
+    }
+});
