@@ -14,6 +14,194 @@
       user-select: none;
       font-family: 'Poppins', sans-serif;
     }
+    /* =========================================================
+       ☀️ LIGHT MODE THEME (ACTIVE ONLY WHEN .light-mode IS ON)
+       ========================================================= */
+    html.light-mode,
+    body.light-mode {
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+
+    body.light-mode {
+      background-image:
+        radial-gradient(circle at 15% 20%, rgba(14, 165, 233, 0.14) 0%, transparent 45%),
+        radial-gradient(circle at 85% 80%, rgba(59, 130, 246, 0.14) 0%, transparent 45%),
+        linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+
+    body.light-mode .glass-card {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.98) 100%);
+      border-color: rgba(15, 23, 42, 0.1);
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
+    }
+
+    body.light-mode .glass-card.drag-over {
+      border-color: #0284c7 !important;
+      background: #ffffff !important;
+    }
+
+    body.light-mode .header-row {
+      border-bottom-color: rgba(15, 23, 42, 0.08);
+    }
+
+    body.light-mode h2 {
+      color: #0f172a;
+    }
+
+    body.light-mode .version-badge {
+      background: rgba(14, 165, 233, 0.12);
+      border-color: rgba(14, 165, 233, 0.35);
+      color: #0284c7;
+    }
+
+    body.light-mode button {
+      color: #0f172a;
+      background: #f1f5f9;
+      border-color: rgba(15, 23, 42, 0.14);
+    }
+
+    body.light-mode button:hover:not(:disabled) {
+      background: #e2e8f0;
+      border-color: rgba(2, 132, 199, 0.55);
+    }
+
+    body.light-mode button:disabled {
+      background: rgba(226, 232, 240, 0.65);
+      border-color: rgba(15, 23, 42, 0.08);
+      color: rgba(15, 23, 42, 0.35);
+    }
+
+    body.light-mode #startBtn:not(:disabled) {
+      color: #ffffff;
+    }
+
+    body.light-mode #toggleViewBtn,
+    body.light-mode #checkUpdateBtn,
+    body.light-mode #themeToggleBtn {
+      background: rgba(15, 23, 42, 0.05);
+      color: #475569;
+    }
+
+    body.light-mode #toggleViewBtn:hover,
+    body.light-mode #checkUpdateBtn:hover,
+    body.light-mode #themeToggleBtn:hover {
+      background: rgba(15, 23, 42, 0.1);
+      color: #0f172a;
+    }
+
+    body.light-mode .file-preview-box {
+      background: #f1f5f9;
+      border-color: rgba(15, 23, 42, 0.09);
+    }
+
+    body.light-mode .thumb-wrapper img {
+      background: rgba(15, 23, 42, 0.04);
+      border-color: rgba(2, 132, 199, 0.45);
+    }
+
+    body.light-mode #previewCountText {
+      color: #0284c7 !important;
+    }
+
+    body.light-mode .processing-image-wrapper {
+      background: #f1f5f9;
+      border-color: rgba(2, 132, 199, 0.45);
+    }
+
+    body.light-mode .progress-wrapper {
+      background: #f1f5f9;
+      border-color: rgba(15, 23, 42, 0.1);
+    }
+
+    body.light-mode .progress-text {
+      color: #0284c7;
+    }
+
+    body.light-mode .percent-text {
+      color: #0f172a;
+    }
+
+    body.light-mode .progress-bar-container {
+      background: rgba(15, 23, 42, 0.1);
+    }
+
+    body.light-mode .gallery-container {
+      background: #f1f5f9;
+      border-color: rgba(15, 23, 42, 0.09);
+    }
+
+    body.light-mode .gallery-header {
+      border-bottom-color: rgba(15, 23, 42, 0.08);
+    }
+
+    body.light-mode .gallery-header h3 {
+      color: #1e293b;
+    }
+
+    body.light-mode .gallery-grid img {
+      border-color: rgba(15, 23, 42, 0.15);
+      background-color: #e2e8f0;
+      background-image:
+        linear-gradient(45deg, rgba(15,23,42,0.07) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(15,23,42,0.07) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(15,23,42,0.07) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(15,23,42,0.07) 75%);
+    }
+
+    body.light-mode .gallery-grid img:hover {
+      border-color: #0284c7;
+    }
+
+    body.light-mode .app-footer {
+      border-top-color: rgba(15, 23, 42, 0.08);
+      color: #64748b;
+    }
+
+    body.light-mode .app-footer strong {
+      color: #334155;
+    }
+
+    body.light-mode .app-footer .highlight {
+      color: #0284c7;
+    }
+
+    body.light-mode .update-modal-overlay {
+      background: rgba(15, 23, 42, 0.45);
+    }
+
+    body.light-mode .update-modal-card {
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      border-color: rgba(2, 132, 199, 0.35);
+      box-shadow: 0 25px 60px rgba(15, 23, 42, 0.25);
+    }
+
+    body.light-mode .update-modal-title {
+      color: #0f172a;
+    }
+
+    body.light-mode .update-version-pill {
+      background: rgba(16, 185, 129, 0.12);
+      color: #059669;
+    }
+
+    body.light-mode .update-notes-box {
+      background: #f1f5f9;
+      border-color: rgba(15, 23, 42, 0.1);
+      color: #334155;
+    }
+
+    body.light-mode #closeUpdateModalBtn {
+      background: rgba(15, 23, 42, 0.06);
+      color: #475569;
+    }
+
+    body.light-mode .toast-banner {
+      background: #ffffff;
+      border-color: rgba(2, 132, 199, 0.35);
+      color: #0f172a;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+    }
 
     /* =========================================================
        ✨ MINIMAL, EYE-CATCHING & ZERO-LAG STUDIO BACKGROUND
@@ -344,14 +532,14 @@
       border-bottom: 2px solid #ef4444;
       display: none;
     }
-    #toggleViewBtn, #checkUpdateBtn {
+#toggleViewBtn, #checkUpdateBtn, #themeToggleBtn {
       padding: 7px 14px;
       font-size: 11.5px;
       border-radius: 10px;
       background: rgba(255, 255, 255, 0.05);
       color: #94a3b8;
     }
-    #toggleViewBtn:hover, #checkUpdateBtn:hover {
+    #toggleViewBtn:hover, #checkUpdateBtn:hover, #themeToggleBtn:hover {
       color: #ffffff;
     }
 
