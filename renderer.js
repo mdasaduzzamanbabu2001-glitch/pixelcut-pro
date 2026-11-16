@@ -34,6 +34,7 @@ const toastBanner = document.getElementById('toastBanner');
 let selectedFiles = []; 
 let fileIdCounter = 0; 
 let isViewVisible = false; 
+let galleryRenderId = 0;
 
 function showToast(msg, duration = 3500) {
     if (!toastBanner) return;
@@ -71,7 +72,7 @@ function getLightweightThumbnail(src) {
                 resolve(src);
             }
         };
-        tempImg.onerror = () => resolve(src);
+        tempImg.onerror = () => resolve(null);
         tempImg.src = src;
     });
 }
@@ -162,9 +163,14 @@ function setWebsiteViewMode(visible) {
     document.body.classList.toggle('view-active', isViewVisible);
     toggleViewBtn.innerText = isViewVisible ? "🙈 Hide Website" : "🌐 Show Website / Login";
 
-    requestAnimationFrame(() => {
+    let sent = false;
+    const syncMainView = () => {
+        if (sent) return;
+        sent = true;
         window.api.toggleView(isViewVisible);
-    });
+    };
+    requestAnimationFrame(syncMainView);
+    setTimeout(syncMainView, 40);
 }
 
 toggleViewBtn.addEventListener('click', () => {
@@ -298,6 +304,7 @@ refreshGalleryBtn.addEventListener('click', () => {
 });
 
 window.api.onGalleryData(async (images) => {
+    const currentRenderId = ++galleryRenderId;
     galleryGrid.innerHTML = ''; 
     if (!images || images.length === 0) {
         galleryGrid.innerHTML = '<p style="font-size: 12px; color: #64748b; text-align: center; grid-column: 1 / -1; margin: 20px 0;">No processed transparent PNGs found yet.</p>';
@@ -305,23 +312,41 @@ window.api.onGalleryData(async (images) => {
     }
 
     const fragment = document.createDocumentFragment();
-    images.forEach(src => {
+    const imgElements = images.map((src) => {
         const img = document.createElement('img');
         img.decoding = 'async';
-        img.loading = 'lazy';
         img.title = "Click to show in folder";
+        img.style.opacity = '0';
         img.onclick = () => {
             if (window.api.openFileLocation) {
                 window.api.openFileLocation(src);
             }
         };
         fragment.appendChild(img);
-
-        getLightweightThumbnail(src).then(thumbSrc => {
-            img.src = thumbSrc;
-        });
+        return { img, src };
     });
     galleryGrid.appendChild(fragment);
+
+    // Decode 4 thumbnails at a time so 5000x5000px PNGs load ultra-smoothly without lag
+    let cursor = 0;
+    const workerCount = Math.min(4, imgElements.length);
+    const workers = Array.from({ length: workerCount }, async () => {
+        while (cursor < imgElements.length) {
+            if (currentRenderId !== galleryRenderId) return;
+            const item = imgElements[cursor++];
+            const thumbSrc = await getLightweightThumbnail(item.src);
+            if (currentRenderId !== galleryRenderId) return;
+            if (thumbSrc) {
+                item.img.onload = () => {
+                    item.img.style.opacity = '1';
+                };
+                item.img.src = thumbSrc;
+            } else {
+                item.img.remove();
+            }
+        }
+    });
+    await Promise.all(workers);
 });
 
 function startProcessMode(title, isRemoveBg) {
