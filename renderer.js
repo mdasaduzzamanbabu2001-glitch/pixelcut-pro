@@ -3,6 +3,7 @@ const fileInput = document.getElementById('fileInput');
 const startBtn = document.getElementById('startBtn');
 const clearAllBtn = document.getElementById('clearAllBtn'); 
 const toggleViewBtn = document.getElementById('toggleViewBtn');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
 const checkUpdateBtn = document.getElementById('checkUpdateBtn');
 const appVersionBadge = document.getElementById('appVersionBadge');
 
