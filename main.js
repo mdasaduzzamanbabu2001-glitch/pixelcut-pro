@@ -1936,7 +1936,7 @@ async function runBatchAutomation(event, incomingData) {
                     await view.webContents.executeJavaScript(FILE_INPUT_HOOK_SCRIPT).catch(() => {});
                     await wait(2800);
 
-                    sendProgress(18, `${fileLabel} Selecting Remove BG tool...`, i, false);
+                    sendProgress(18, `${fileLabel}Throw The Image to Pixelcut Studio...`, i, false);
                     await view.webContents.executeJavaScript(`window.__lastClickedFileInput = null;`).catch(() => {});
 
                     let homeBtnRect = null;
