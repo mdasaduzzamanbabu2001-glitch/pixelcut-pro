@@ -83,6 +83,29 @@ function getLightweightThumbnail(src) {
 window.addEventListener('DOMContentLoaded', () => {
     window.api.refreshGallery();
 });
+// ==========================================================
+// ☀️ / 🌙 DARK & LIGHT MODE THEME TOGGLE
+// ==========================================================
+function applyTheme(isLight) {
+    document.documentElement.classList.toggle('light-mode', isLight);
+    document.body.classList.toggle('light-mode', isLight);
+    if (themeToggleBtn) {
+        themeToggleBtn.innerText = isLight ? '🌙 Dark' : '☀️ Light';
+        themeToggleBtn.title = isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode';
+    }
+}
+
+// অ্যাপ ওপেন হলে সেভ করা থিম চেক করবে (প্রথমবার ডিফল্ট Dark Mode থাকবে)
+const savedTheme = localStorage.getItem('pixelcut_theme');
+applyTheme(savedTheme === 'light');
+
+if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+        const isNowLight = !document.body.classList.contains('light-mode');
+        applyTheme(isNowLight);
+        localStorage.setItem('pixelcut_theme', isNowLight ? 'light' : 'dark');
+    });
+}
 
 // ==========================================================
 // 🚀 LIVE AUTO-UPDATE POPUP LOGIC
