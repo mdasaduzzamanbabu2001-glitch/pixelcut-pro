@@ -2019,7 +2019,7 @@ async function runBatchAutomation(event, incomingData) {
                         if (rmClickCount < 3 && (w - lastRmClickStep) >= 3) {
                             const sideRmRect = await getPixelcutElement('sidebarRemoveBgBtn');
                             if (sideRmRect) {
-                                sendProgress(58, `${fileLabel} Clicking Remove Background...`, i, false);
+                                sendProgress(58, `${fileLabel} Still Uploading...`, i, false);
                                 await cdpClick(sideRmRect.x, sideRmRect.y);
                                 rmClickCount++;
                                 lastRmClickStep = w;
