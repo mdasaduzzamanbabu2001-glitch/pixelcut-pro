@@ -1,8 +1,9 @@
-const { app, BrowserWindow, BrowserView, ipcMain, nativeImage, shell, powerSaveBlocker, session } = require('electron');
+const { app, BrowserWindow, BrowserView, WebContentsView, ipcMain, nativeImage, shell, powerSaveBlocker, session, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const https = require('https');
+const { pathToFileURL, fileURLToPath } = require('url');
 
 // ==========================================================
 // 🌐 SMART GITHUB INSTANT AUTO-UPDATE CONFIG (ZERO DELAY)
@@ -20,7 +21,6 @@ const DESKTOP_PATH = path.join(os.homedir(), 'Desktop');
 const WORK_TEMP_DIR = path.join(app.getPath('userData'), 'pixelcut_temp_work');
 const SAVED_KEY_FILE = path.join(DESKTOP_PATH, 'gemini_api_key.txt');
 const DEFAULT_GEMINI_KEY = "AIzaSyC80w5GGuxs9akysrKAGCwH6gw9-lMvraY";
-const PIXELCUT_WORKER_HTML_PATH = path.join(WORK_TEMP_DIR, 'pixelcut_worker.html');
 
 if (!fs.existsSync(WORK_TEMP_DIR)) {
     fs.mkdirSync(WORK_TEMP_DIR, { recursive: true });
@@ -68,17 +68,13 @@ if (process.platform === 'win32') {
 }
 
 let mainWindow;
-let workerWindow = null;
-let workerInitPromise = null;
 let view;
 let isViewVisible = false;
 let isAutomationRunning = false;
-let isDebuggerReady = false;
 let currentActiveIndex = 0;
 let currentOriginalName = 'Image';
 let downloadDoneResolver = null;
-let lastValidWindowSize = [1050, 780];
-let lastBoundsKey = '';
+let lastValidWindowSize = [1280, 800];
 let powerBlockerId = null;
 
 // Auto-update state
@@ -88,86 +84,7 @@ let lastCheckedSha = null;
 let lastAutoPromptedVersion = null;
 let cachedSubfolderPrefix = '';
 
-// Async gallery state
-let isReadingGallery = false;
-let pendingGalleryRefresh = false;
-
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
-
-// ==========================================================
-// ⚙️ ISOLATED BACKGROUND WORKER WINDOW (ZERO UI LAG!)
-// ==========================================================
-async function ensureWorkerWindow() {
-    if (workerWindow && !workerWindow.isDestroyed()) {
-        if (workerInitPromise) await workerInitPromise;
-        return workerWindow;
-    }
-    if (workerInitPromise) {
-        await workerInitPromise;
-        if (workerWindow && !workerWindow.isDestroyed()) return workerWindow;
-    }
-    workerInitPromise = (async () => {
-        if (!fs.existsSync(PIXELCUT_WORKER_HTML_PATH)) {
-            fs.writeFileSync(
-                PIXELCUT_WORKER_HTML_PATH,
-                '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body></body></html>',
-                'utf8'
-            );
-        }
-        const win = new BrowserWindow({
-            width: 120,
-            height: 120,
-            show: false,
-            skipTaskbar: true,
-            webPreferences: {
-                partition: 'pixelcut_worker_bg',
-                contextIsolation: true,
-                nodeIntegration: false,
-                backgroundThrottling: false,
-                paintWhenInitiallyHidden: true
-            }
-        });
-        workerWindow = win;
-        win.on('closed', () => {
-            if (workerWindow === win) workerWindow = null;
-        });
-        await new Promise((resolve) => {
-            win.webContents.once('did-finish-load', resolve);
-            win.loadFile(PIXELCUT_WORKER_HTML_PATH);
-        });
-    })();
-
-    try {
-        await workerInitPromise;
-    } finally {
-        workerInitPromise = null;
-    }
-    return workerWindow;
-}
-
-async function runInWorkerWindow(script) {
-    try {
-        const win = await ensureWorkerWindow();
-        if (win && !win.isDestroyed()) {
-            return await win.webContents.executeJavaScript(script);
-        }
-    } catch (err) {
-        console.error("WorkerWindow fallback triggered:", err);
-    }
-    if (mainWindow && !mainWindow.isDestroyed()) {
-        return await mainWindow.webContents.executeJavaScript(script);
-    }
-    throw new Error("No renderer window available");
-}
-
-function destroyWorkerWindowSafely() {
-    try {
-        if (workerWindow && !workerWindow.isDestroyed()) {
-            workerWindow.destroy();
-        }
-    } catch (e) {}
-    workerWindow = null;
-}
 
 // ==========================================================
 // 🔄 ZERO-DELAY SMART GITHUB AUTO-UPDATE ENGINE (AUTO-POPUP!)
@@ -246,6 +163,7 @@ function httpsGetBuffer(urlStr, extraHeaders = {}, timeoutMs = 12000, redirectLe
     });
 }
 
+// Git Smart HTTP pkt-line থেকে সরাসরি লাইভ Commit Hash বের করে (০ সেকেন্ড ক্যাশ + কোনো Rate Limit নেই!)
 function parseGitPktLinesForHeadSha(buf) {
     let i = 0;
     const refs = {};
@@ -289,6 +207,7 @@ async function getLatestCommitSha(owner, repo) {
 async function fetchFileFromGitHub(fileName, commitSha = null) {
     const { owner, repo } = extractOwnerRepo();
 
+    // 1. যদি Commit SHA থাকে, তবে সরাসরি Immutable SHA URL থেকে নামাবে (০ সেকেন্ড ক্যাশ ডিলে!)
     if (commitSha) {
         try {
             const buf = await httpsGetBuffer(
@@ -308,6 +227,7 @@ async function fetchFileFromGitHub(fileName, commitSha = null) {
         }
     }
 
+    // 2. Fallback: Try main / master branches directly
     for (const branch of ['main', 'master']) {
         try {
             const buf = await httpsGetBuffer(
@@ -317,6 +237,7 @@ async function fetchFileFromGitHub(fileName, commitSha = null) {
         } catch (e) {}
     }
 
+    // 3. Fallback: GitHub API (সাবফোল্ডারসহ খোঁজার জন্য)
     try {
         const refQuery = commitSha ? `?ref=${commitSha}` : '';
         const rootBuf = await httpsGetBuffer(
@@ -356,7 +277,7 @@ async function fetchFileFromGitHub(fileName, commitSha = null) {
 
 async function checkOnlineUpdate(isManual = false) {
     if (!mainWindow || mainWindow.isDestroyed()) return;
-    if (!isManual && isAutomationRunning) return;
+    if (!isManual && isAutomationRunning) return; // ব্যাচ চলাকালীন অটো-পপআপ দিয়ে কাজ থামাবে না
     if (isCheckingUpdate) return;
 
     isCheckingUpdate = true;
@@ -365,8 +286,10 @@ async function checkOnlineUpdate(isManual = false) {
         const localPkg = getLocalPackageJson();
         const localVersion = localPkg.version || '1.0.0';
 
+        // আগে লাইভ Commit Hash চেক করা (মাত্র ~300 bytes, 0-second cache!)
         const liveSha = await getLatestCommitSha(owner, repo);
 
+        // অটো-চেকের সময় যদি GitHub-এ কোনো নতুন Commit না থাকে, তবে এখানেই থেমে যাবে
         if (!isManual && liveSha && liveSha === lastCheckedSha) {
             return;
         }
@@ -451,7 +374,6 @@ async function performLiveOtaUpdate() {
             autoUpdateTimer = null;
         }
         detachDebuggerSafely();
-        destroyWorkerWindowSafely();
         if (powerBlockerId !== null && powerSaveBlocker.isStarted(powerBlockerId)) {
             powerSaveBlocker.stop(powerBlockerId);
         }
@@ -796,7 +718,7 @@ function httpsPostRequest(urlStr, headers, bodyStr, timeoutMs = 10000) {
 
 async function prepareDualContrastImages(rawBase64DataUrl) {
     try {
-        return await runInWorkerWindow(`
+        return await mainWindow.webContents.executeJavaScript(`
             (async () => {
                 const img = new Image();
                 await new Promise((res, rej) => {
@@ -835,18 +757,12 @@ async function prepareDualContrastImages(rawBase64DataUrl) {
                 ctxS.drawImage(cWhite, 0, 0);
                 ctxS.drawImage(cBlack, 0, box);
 
-                const result = {
+                return {
                     whiteDataUrl: cWhite.toDataURL('image/jpeg', 0.85),
                     blackDataUrl: cBlack.toDataURL('image/jpeg', 0.85),
                     stackedDataUrl: cStacked.toDataURL('image/jpeg', 0.82),
                     boxSize: box
                 };
-
-                cWhite.width = 0; cWhite.height = 0;
-                cBlack.width = 0; cBlack.height = 0;
-                cStacked.width = 0; cStacked.height = 0;
-                img.src = '';
-                return result;
             })();
         `);
     } catch (e) {
@@ -1019,7 +935,7 @@ async function scanWithFreeNeuralOcr(stackedDataUrl, boxSize) {
 
 async function scanWithLocalTesseractInWindow(whiteDataUrl, blackDataUrl) {
     try {
-        const rawExtracted = await runInWorkerWindow(`
+        const rawExtracted = await mainWindow.webContents.executeJavaScript(`
             (async () => {
                 if (!window.Tesseract) {
                     await new Promise((res, rej) => {
@@ -1099,13 +1015,13 @@ async function processTransparentPng5000pxTrimAndSave(rawPngPath, readyTitle) {
     const pngB64 = fs.readFileSync(rawPngPath).toString('base64');
     const dataUrl = `data:image/png;base64,${pngB64}`;
 
-    const trimmedPngDataUrl = await runInWorkerWindow(`
+    const trimmedPngDataUrl = await mainWindow.webContents.executeJavaScript(`
         (async () => {
             const img = new Image();
             await new Promise((res, rej) => {
                 img.onload = res;
                 img.onerror = rej;
-                img.src = ${JSON.stringify(dataUrl)};
+                img.src = "${dataUrl}";
             });
 
             const w = img.naturalWidth || img.width;
@@ -1159,11 +1075,7 @@ async function processTransparentPng5000pxTrimAndSave(rawPngPath, readyTitle) {
             ctx2.drawImage(c1, minX, minY, trimW, trimH, 0, 0, finalW, finalH);
             ctx2.drawImage(c1, minX, minY, trimW, trimH, 0, 0, finalW, finalH);
 
-            const outDataUrl = c2.toDataURL("image/png");
-            c1.width = 0; c1.height = 0;
-            c2.width = 0; c2.height = 0;
-            img.src = '';
-            return outDataUrl;
+            return c2.toDataURL("image/png");
         })();
     `);
 
@@ -1192,41 +1104,24 @@ async function processTransparentPng5000pxTrimAndSave(rawPngPath, readyTitle) {
 // ==========================================================
 // 🛠️ CHROME DEVTOOLS PROTOCOL (CDP) CLICK & ANTI-MINIMIZE ENGINE
 // ==========================================================
-async function ensureDebugger(forceSetup = false) {
-    if (!view || !view.webContents || view.webContents.isDestroyed()) return null;
+async function ensureDebugger() {
+    if (!view || !view.webContents) return null;
     const dbg = view.webContents.debugger;
-    let justAttached = false;
-
     if (!dbg.isAttached()) {
         try {
             dbg.attach('1.3');
-            justAttached = true;
-            isDebuggerReady = false;
-            if (!dbg.__detachListenerAdded) {
-                dbg.__detachListenerAdded = true;
-                dbg.on('detach', () => {
-                    isDebuggerReady = false;
-                });
-            }
         } catch (err) {}
     }
-
-    if (justAttached || forceSetup || !isDebuggerReady) {
-        try {
-            if (justAttached || !isDebuggerReady) {
-                await dbg.sendCommand('Page.enable');
-                await dbg.sendCommand('Emulation.setFocusEmulationEnabled', { enabled: true });
-            }
-            await dbg.sendCommand('Page.setWebLifecycleState', { state: 'active' });
-            isDebuggerReady = true;
-        } catch (e) {}
-    }
-
+    try {
+        await dbg.sendCommand('Page.enable');
+        await dbg.sendCommand('DOM.enable');
+        await dbg.sendCommand('Emulation.setFocusEmulationEnabled', { enabled: true });
+        await dbg.sendCommand('Page.setWebLifecycleState', { state: 'active' });
+    } catch (e) {}
     return dbg;
 }
 
 function detachDebuggerSafely() {
-    isDebuggerReady = false;
     try {
         if (view && view.webContents && view.webContents.debugger.isAttached()) {
             view.webContents.debugger.detach();
@@ -1235,7 +1130,7 @@ function detachDebuggerSafely() {
 }
 
 async function cdpClick(x, y) {
-    const dbg = await ensureDebugger(false);
+    const dbg = await ensureDebugger();
     const rx = Math.round(x);
     const ry = Math.round(y);
     await dbg.sendCommand('Input.dispatchMouseEvent', {
@@ -1284,63 +1179,34 @@ const FILE_INPUT_HOOK_SCRIPT = `
             return fn;
         }
 
-        if (!window.__visibilityPatchApplied) {
-            window.__visibilityPatchApplied = true;
-            try {
-                Object.defineProperty(document, 'hidden', { get: maskAsNative(() => false, 'get hidden'), configurable: true });
-                Object.defineProperty(document, 'visibilityState', { get: maskAsNative(() => 'visible', 'get visibilityState'), configurable: true });
-                Object.defineProperty(document, 'webkitHidden', { get: maskAsNative(() => false, 'get webkitHidden'), configurable: true });
-                document.hasFocus = maskAsNative(() => true, 'hasFocus');
-                window.addEventListener('visibilitychange', (e) => e.stopImmediatePropagation(), true);
-            } catch (e) {}
-        }
+        try {
+            Object.defineProperty(document, 'hidden', { get: maskAsNative(() => false, 'get hidden'), configurable: true });
+            Object.defineProperty(document, 'visibilityState', { get: maskAsNative(() => 'visible', 'get visibilityState'), configurable: true });
+            Object.defineProperty(document, 'webkitHidden', { get: maskAsNative(() => false, 'get webkitHidden'), configurable: true });
+            document.hasFocus = maskAsNative(() => true, 'hasFocus');
+            window.addEventListener('visibilitychange', (e) => e.stopImmediatePropagation(), true);
+        } catch (e) {}
 
         if (!window.__rafKeepAliveInstalled) {
             window.__rafKeepAliveInstalled = true;
-            const origRAF = window.requestAnimationFrame.bind(window);
-            const origCAF = window.cancelAnimationFrame ? window.cancelAnimationFrame.bind(window) : null;
-            let syntheticRafId = 1;
-            const activeRafMap = new Map();
-
+            const origRAF = window.requestAnimationFrame;
             window.requestAnimationFrame = maskAsNative(function requestAnimationFrame(cb) {
-                const id = syntheticRafId++;
-                let settled = false;
-                let realRafId = 0;
-
+                let called = false;
                 const timerId = setTimeout(() => {
-                    if (settled) return;
-                    settled = true;
-                    activeRafMap.delete(id);
-                    if (origCAF && realRafId) {
-                        try { origCAF(realRafId); } catch (e) {}
+                    if (!called) {
+                        called = true;
+                        cb(performance.now());
                     }
-                    cb(performance.now());
-                }, 48);
-
-                realRafId = origRAF((ts) => {
-                    if (settled) return;
-                    settled = true;
-                    clearTimeout(timerId);
-                    activeRafMap.delete(id);
-                    cb(ts);
+                }, 16);
+                origRAF.call(window, (ts) => {
+                    if (!called) {
+                        called = true;
+                        clearTimeout(timerId);
+                        cb(ts);
+                    }
                 });
-
-                activeRafMap.set(id, { timerId, realRafId });
-                return id;
+                return timerId;
             }, 'requestAnimationFrame');
-
-            if (origCAF) {
-                window.cancelAnimationFrame = maskAsNative(function cancelAnimationFrame(id) {
-                    const entry = activeRafMap.get(id);
-                    if (entry) {
-                        activeRafMap.delete(id);
-                        clearTimeout(entry.timerId);
-                        try { origCAF(entry.realRafId); } catch (e) {}
-                    } else {
-                        try { origCAF(id); } catch (e) {}
-                    }
-                }, 'cancelAnimationFrame');
-            }
         }
 
         if (window.__pixelcutHookInstalled) return;
@@ -1400,14 +1266,10 @@ function updateViewBounds() {
     }
 
     const [winWidth, winHeight] = lastValidWindowSize;
-    const nextBounds = isViewVisible
-        ? { x: 0, y: 210, width: winWidth, height: Math.max(300, winHeight - 210) }
-        : { x: Math.max(0, winWidth - 2), y: Math.max(0, winHeight - 2), width: 1365, height: 911 };
-
-    const key = `${nextBounds.x},${nextBounds.y},${nextBounds.width},${nextBounds.height}`;
-    if (key !== lastBoundsKey) {
-        lastBoundsKey = key;
-        view.setBounds(nextBounds);
+    if (isViewVisible) {
+        view.setBounds({ x: 0, y: 210, width: winWidth, height: Math.max(300, winHeight - 210) });
+    } else {
+        view.setBounds({ x: Math.max(0, winWidth - 2), y: Math.max(0, winHeight - 2), width: 1365, height: 911 });
     }
 }
 
@@ -1534,9 +1396,19 @@ function createWindow() {
     powerBlockerId = powerSaveBlocker.start('prevent-app-suspension');
     configurePersistSessionStealth();
 
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const { x: workX, y: workY, width: workWidth, height: workHeight } = primaryDisplay.workArea;
+    lastValidWindowSize = [workWidth, workHeight];
+
     mainWindow = new BrowserWindow({
-        width: 1050,
-        height: 780,
+        x: workX,
+        y: workY,
+        width: workWidth,
+        height: workHeight,
+        minWidth: 900,
+        minHeight: 640,
+        show: false,
+        backgroundColor: '#090d16',
         title: "Pixelcut Pro Tool",
         icon: path.join(__dirname, 'icon.png'),
         webPreferences: {
@@ -1555,10 +1427,7 @@ function createWindow() {
         const localPkg = getLocalPackageJson();
         mainWindow.webContents.send('app-version', localPkg.version || '1.0.0');
 
-        setTimeout(() => {
-            ensureWorkerWindow().catch(() => {});
-        }, 800);
-
+        // অ্যাপ ওপেন হওয়ার ১.৫ সেকেন্ড পর প্রথমবার এবং এরপর প্রতি ১০ সেকেন্ড পরপর অটোমেটিক আপডেট চেক করবে!
         setTimeout(() => {
             checkOnlineUpdate(false);
         }, 1500);
@@ -1574,10 +1443,10 @@ function createWindow() {
             clearInterval(autoUpdateTimer);
             autoUpdateTimer = null;
         }
-        destroyWorkerWindowSafely();
     });
 
-    view = new BrowserView({
+    const ViewClass = WebContentsView || BrowserView;
+    view = new ViewClass({
         webPreferences: {
             preload: STEALTH_PRELOAD_PATH,
             backgroundThrottling: false,
@@ -1589,6 +1458,10 @@ function createWindow() {
             nativeWindowOpen: true
         }
     });
+
+    if (typeof view.setBackgroundColor === 'function') {
+        view.setBackgroundColor('#00000000');
+    }
 
     view.webContents.setUserAgent(SECURE_UA);
 
@@ -1606,31 +1479,59 @@ function createWindow() {
         attachStealthToOAuthPopup(childWin);
     });
 
-    mainWindow.setBrowserView(view);
+    if (mainWindow.contentView && typeof mainWindow.contentView.addChildView === 'function') {
+        mainWindow.contentView.addChildView(view);
+    } else {
+        mainWindow.setBrowserView(view);
+    }
     updateViewBounds();
 
-    mainWindow.on('resize', () => {
-        if (!mainWindow.isMinimized()) {
-            updateViewBounds();
+    const syncLayout = () => {
+        if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isMinimized()) return;
+        updateViewBounds();
+        setTimeout(() => {
+            if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isMinimized()) {
+                updateViewBounds();
+            }
+        }, 60);
+    };
+
+    let isWindowShown = false;
+    const showMaximizedWindow = () => {
+        if (isWindowShown || !mainWindow || mainWindow.isDestroyed()) return;
+        isWindowShown = true;
+        if (!mainWindow.isMaximized()) {
+            mainWindow.maximize();
         }
-    });
+        mainWindow.show();
+        mainWindow.focus();
+        syncLayout();
+    };
+
+    mainWindow.once('ready-to-show', showMaximizedWindow);
+    setTimeout(showMaximizedWindow, 800);
+
+    mainWindow.on('resize', syncLayout);
+    mainWindow.on('resized', syncLayout);
+    mainWindow.on('maximize', syncLayout);
+    mainWindow.on('unmaximize', syncLayout);
+    mainWindow.on('enter-full-screen', syncLayout);
+    mainWindow.on('leave-full-screen', syncLayout);
 
     mainWindow.on('minimize', () => {
         if (isAutomationRunning) {
-            ensureDebugger(true).catch(() => {});
+            ensureDebugger().catch(() => {});
             view.webContents.executeJavaScript(FILE_INPUT_HOOK_SCRIPT).catch(() => {});
         }
     });
 
-    mainWindow.on('restore', () => {
-        updateViewBounds();
-    });
+    mainWindow.on('restore', syncLayout);
 
     view.webContents.loadURL('https://www.pixelcut.ai/create');
 
     view.webContents.on('dom-ready', () => {
         if (isAutomationRunning) {
-            ensureDebugger(true).catch(() => {});
+            ensureDebugger().catch(() => {});
         } else {
             detachDebuggerSafely();
         }
@@ -1640,7 +1541,7 @@ function createWindow() {
 
     view.webContents.on('did-finish-load', () => {
         if (isAutomationRunning) {
-            ensureDebugger(true).catch(() => {});
+            ensureDebugger().catch(() => {});
         } else {
             detachDebuggerSafely();
         }
@@ -1682,7 +1583,6 @@ app.on('window-all-closed', () => {
         clearInterval(autoUpdateTimer);
         autoUpdateTimer = null;
     }
-    destroyWorkerWindowSafely();
     if (powerBlockerId !== null && powerSaveBlocker.isStarted(powerBlockerId)) {
         powerSaveBlocker.stop(powerBlockerId);
     }
@@ -1713,67 +1613,43 @@ ipcMain.on('start-reset', async () => {
 
 ipcMain.on('open-file-location', (event, fileUrlOrPath) => {
     try {
-        const cleanPath = fileUrlOrPath.startsWith('file:///')
-            ? decodeURIComponent(fileUrlOrPath.replace('file:///', ''))
+        const cleanPath = fileUrlOrPath.startsWith('file://')
+            ? fileURLToPath(fileUrlOrPath)
             : fileUrlOrPath;
         shell.showItemInFolder(path.normalize(cleanPath));
     } catch (err) {
-        console.error("Failed to open file location:", err);
+        try {
+            const fallbackPath = fileUrlOrPath.startsWith('file:///')
+                ? decodeURIComponent(fileUrlOrPath.replace('file:///', ''))
+                : fileUrlOrPath;
+            shell.showItemInFolder(path.normalize(fallbackPath));
+        } catch (e) {
+            console.error("Failed to open file location:", err);
+        }
     }
 });
 
-async function sendGalleryFiles() {
+function sendGalleryFiles() {
     if (!mainWindow || mainWindow.isDestroyed()) return;
-    if (isReadingGallery) {
-        pendingGalleryRefresh = true;
-        return;
-    }
-    isReadingGallery = true;
     try {
         const outDir = getOutputFolder();
-        const entries = await fs.promises.readdir(outDir, { withFileTypes: true });
-        const pngNames = entries
-            .filter(ent => ent.isFile() && ent.name.toLowerCase().endsWith('.png'))
-            .map(ent => ent.name);
-
-        const items = [];
-        for (let i = 0; i < pngNames.length; i += 20) {
-            const slice = pngNames.slice(i, i + 20);
-            const chunkStats = await Promise.all(slice.map(async (name) => {
-                try {
-                    const fullPath = path.join(outDir, name);
-                    const stat = await fs.promises.stat(fullPath);
-                    return {
-                        url: `file:///${fullPath.replace(/\\/g, '/')}`,
-                        time: stat.mtimeMs
-                    };
-                } catch (e) {
-                    return null;
-                }
-            }));
-            for (const it of chunkStats) {
-                if (it) items.push(it);
-            }
-        }
-
-        const files = items
+        const files = fs.readdirSync(outDir)
+            .filter(name => name.toLowerCase().endsWith('.png'))
+            .map(name => {
+                const fullPath = path.join(outDir, name);
+                const stat = fs.statSync(fullPath);
+                return {
+                    url: pathToFileURL(fullPath).href,
+                    time: stat.mtimeMs
+                };
+            })
             .sort((a, b) => b.time - a.time)
             .slice(0, 24)
             .map(item => item.url);
 
-        if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.send('gallery-data', files);
-        }
+        mainWindow.webContents.send('gallery-data', files);
     } catch (err) {
-        if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.send('gallery-data', []);
-        }
-        } finally {
-        isReadingGallery = false;
-        if (pendingGalleryRefresh) {
-            pendingGalleryRefresh = false;
-            setImmediate(() => { sendGalleryFiles(); });
-        }
+        mainWindow.webContents.send('gallery-data', []);
     }
 }
 
@@ -1897,19 +1773,12 @@ async function runBatchAutomation(event, incomingData) {
     };
 
     isAutomationRunning = true;
-    let isBatchStillActive = true;
-    await ensureDebugger(true);
-    await ensureWorkerWindow().catch(() => {});
+    await ensureDebugger();
     updateViewBounds();
 
     const aiTitlesMap = new Map();
     (async () => {
         for (let idx = 0; idx < filesArray.length; idx++) {
-            // Keep AI title pre-scan 1-2 images ahead so big batches never flood CPU/network
-            while (isBatchStillActive && idx > currentActiveIndex + 2) {
-                await wait(500);
-            }
-            if (!isBatchStillActive) break;
             const fObj = filesArray[idx];
             const t = await generateAiTitleNode(fObj.data, customApiKey);
             aiTitlesMap.set(idx, t);
@@ -1927,16 +1796,16 @@ async function runBatchAutomation(event, incomingData) {
             let fileCompleted = false;
             for (let fileTry = 1; fileTry <= 3 && !fileCompleted; fileTry++) {
                 try {
-                    await ensureDebugger(false);
+                    await ensureDebugger();
                     updateViewBounds();
 
                     sendProgress(5, `${fileLabel} Loading Pixelcut Studio${fileTry > 1 ? ` (Retry ${fileTry})` : ''}...`, i, false);
                     await view.webContents.loadURL('https://www.pixelcut.ai/create');
-                    await ensureDebugger(true);
+                    await ensureDebugger();
                     await view.webContents.executeJavaScript(FILE_INPUT_HOOK_SCRIPT).catch(() => {});
                     await wait(2800);
 
-                    sendProgress(18, `${fileLabel}Throw The Image to Pixelcut Studio...`, i, false);
+                    sendProgress(18, `${fileLabel} Selecting Remove BG tool...`, i, false);
                     await view.webContents.executeJavaScript(`window.__lastClickedFileInput = null;`).catch(() => {});
 
                     let homeBtnRect = null;
@@ -2019,7 +1888,7 @@ async function runBatchAutomation(event, incomingData) {
                         if (rmClickCount < 3 && (w - lastRmClickStep) >= 3) {
                             const sideRmRect = await getPixelcutElement('sidebarRemoveBgBtn');
                             if (sideRmRect) {
-                                sendProgress(58, `${fileLabel} Still Uploading...`, i, false);
+                                sendProgress(58, `${fileLabel} Clicking Remove Background...`, i, false);
                                 await cdpClick(sideRmRect.x, sideRmRect.y);
                                 rmClickCount++;
                                 lastRmClickStep = w;
@@ -2124,7 +1993,6 @@ async function runBatchAutomation(event, incomingData) {
             }
         }
     } finally {
-        isBatchStillActive = false;
         isAutomationRunning = false;
         detachDebuggerSafely();
     }
