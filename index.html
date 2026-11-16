@@ -16,15 +16,13 @@
     }
 
     /* =========================================================
-       ✨ FULL-SCREEN STUDIO ARTBOARD BACKGROUND (ZERO BLANK SPACE)
+       ✨ MINIMAL, EYE-CATCHING & ZERO-LAG STUDIO BACKGROUND
        ========================================================= */
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
       width: 100%;
-      min-width: 100%;
-      min-height: 100%;
       overflow: hidden;
       background-color: #090d16;
     }
@@ -39,11 +37,10 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 16px;
     }
 
     /* =========================================================
-       🛡️ FIT-TO-MONITOR STUDIO CARD (ZERO-LAG GPU COMPOSITED)
+       🛡️ CLEAN MINIMALIST STUDIO CARD (ORIGINAL SIZE PRESERVED)
        ========================================================= */
     .glass-card {
       position: relative;
@@ -51,13 +48,11 @@
       background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(11, 17, 32, 0.97) 100%);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 20px;
-      padding: 24px 32px;
+      padding: 28px 34px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
       text-align: center;
-      width: 100%;
-      height: 100%;
-      max-width: 100%;
-      max-height: 100%;
+      width: 90%;
+      max-width: 760px;
       display: flex;
       flex-direction: column;
       transform: translateZ(0);
@@ -69,10 +64,9 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
       padding-bottom: 12px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      flex-shrink: 0;
     }
 
     h2 {
@@ -109,20 +103,16 @@
       gap: 8px;
     }
 
-    .hud-main-workspace {
-      flex-shrink: 0;
-    }
-
     /* =========================================================
        🛰️ COMPACT TOP-BAR MODE WHEN WEBSITE IS VISIBLE
        ========================================================= */
     body.view-active {
       justify-content: flex-start;
-      padding: 8px 12px 0 12px;
+      padding-top: 8px;
     }
     body.view-active .glass-card {
-      width: 100%;
-      max-width: 100%;
+      width: 98%;
+      max-width: 985px;
       height: 194px;
       padding: 12px 22px;
       border-radius: 16px;
@@ -191,22 +181,18 @@
       display: none;
       align-items: center;
       justify-content: center;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
       background: rgba(9, 13, 22, 0.65);
       padding: 14px 18px;
       border-radius: 14px;
       border: 1px solid rgba(255, 255, 255, 0.08);
       flex-wrap: wrap;
       gap: 12px;
-      max-height: 195px;
+      max-height: 155px;
       overflow-y: auto;
     }
-    .file-preview-box::-webkit-scrollbar,
-    .gallery-grid::-webkit-scrollbar { width: 6px; }
-    .file-preview-box::-webkit-scrollbar-track,
-    .gallery-grid::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.03); border-radius: 6px; }
-    .file-preview-box::-webkit-scrollbar-thumb,
-    .gallery-grid::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.7); border-radius: 6px; }
+    .file-preview-box::-webkit-scrollbar { width: 5px; }
+    .file-preview-box::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 5px; }
 
     .thumb-wrapper {
       position: relative;
@@ -217,8 +203,8 @@
       transform: translateY(-2px);
     }
     .thumb-wrapper img {
-      width: 58px;
-      height: 58px;
+      width: 52px;
+      height: 52px;
       border-radius: 10px;
       object-fit: contain;
       background: rgba(255, 255, 255, 0.04);
@@ -312,7 +298,6 @@
       justify-content: center;
       align-items: center;
       margin-bottom: 14px;
-      flex-shrink: 0;
     }
 
     button {
@@ -414,56 +399,58 @@
     }
 
     /* =========================================================
-       🎨 FULL-FIT EXPANDING GALLERY BOX
+       🎨 GALLERY BOX (ORIGINAL SIZE PRESERVED)
        ========================================================= */
     .gallery-container {
-      margin-top: 8px;
+      margin-top: 12px;
       background: rgba(9, 13, 22, 0.65);
       border-radius: 14px;
-      padding: 16px;
+      padding: 14px;
       border: 1px solid rgba(255, 255, 255, 0.07);
-      flex: 1;
-      min-height: 160px;
+      max-height: 185px;
       display: flex;
       flex-direction: column;
       contain: content;
-      overflow: hidden;
     }
     .gallery-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-      padding-bottom: 10px;
-      margin-bottom: 12px;
-      flex-shrink: 0;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
     }
     .gallery-header h3 {
       margin: 0;
-      font-size: 13.5px;
+      font-size: 13px;
       font-weight: 600;
       color: #cbd5e1;
     }
+    .gallery-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
     .gallery-header button {
-      font-size: 11.5px;
+      font-size: 11px;
       padding: 5px 12px;
       border-radius: 8px;
     }
+    #clearGalleryBtn {
+      border-bottom: 2px solid #ef4444;
+    }
     .gallery-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+      gap: 10px;
       overflow-y: auto;
-      padding: 4px 6px 4px 2px;
-      flex: 1;
-      min-height: 0;
-      align-content: start;
+      padding-right: 4px;
     }
     .gallery-grid img {
       width: 100%;
-      height: 86px;
+      height: 64px;
       object-fit: contain;
-      border-radius: 10px;
+      border-radius: 8px;
       border: 1px solid rgba(255, 255, 255, 0.12);
       transition: transform 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
       cursor: pointer;
@@ -476,18 +463,17 @@
       background-position: 0 0, 0 6px, 6px -6px, -6px 0;
     }
     .gallery-grid img:hover {
-      transform: scale(1.06);
+      transform: scale(1.08);
       border-color: #38bdf8;
     }
 
     /* Footer */
     .app-footer {
-      margin-top: 14px;
+      margin-top: 16px;
       padding-top: 10px;
       border-top: 1px solid rgba(255, 255, 255, 0.06);
       font-size: 11px;
       color: #64748b;
-      flex-shrink: 0;
     }
     .app-footer strong {
       color: #94a3b8;
@@ -500,7 +486,7 @@
     .glass-card.drag-over {
       border-color: #38bdf8 !important;
       background: rgba(15, 23, 42, 0.98) !important;
-      transform: scale(1.004);
+      transform: scale(1.01);
     }
 
     /* =========================================================
@@ -643,7 +629,10 @@
     <div class="gallery-container" id="galleryContainer">
       <div class="gallery-header">
         <h3>🖼️ Processed Output Gallery</h3>
-        <button id="refreshGalleryBtn">🔄 Refresh</button>
+        <div class="gallery-actions">
+          <button id="refreshGalleryBtn">🔄 Refresh</button>
+          <button id="clearGalleryBtn">🧹 Clear Gallery</button>
+        </div>
       </div>
       <div class="gallery-grid" id="galleryGrid">
         <p style="font-size: 12px; color: #64748b; text-align: center; width: 100%; grid-column: 1 / -1; margin: 20px 0;">
