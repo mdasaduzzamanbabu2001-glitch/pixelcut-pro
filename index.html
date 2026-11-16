@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pro Studio Tool</title>
   <!-- Google Font: Poppins -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,15 +16,20 @@
     }
 
     /* =========================================================
-       ✨ MINIMAL, EYE-CATCHING & ZERO-LAG STUDIO BACKGROUND
+       ✨ FULL-SCREEN STUDIO ARTBOARD BACKGROUND (ZERO BLANK SPACE)
        ========================================================= */
-    body {
+    html, body {
       margin: 0;
       padding: 0;
-      height: 100vh;
-      width: 100vw;
+      height: 100%;
+      width: 100%;
+      min-width: 100%;
+      min-height: 100%;
       overflow: hidden;
       background-color: #090d16;
+    }
+
+    body {
       background-image:
         radial-gradient(circle at 15% 20%, rgba(14, 165, 233, 0.12) 0%, transparent 45%),
         radial-gradient(circle at 85% 80%, rgba(59, 130, 246, 0.12) 0%, transparent 45%),
@@ -33,10 +39,11 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      padding: 16px;
     }
 
     /* =========================================================
-       🛡️ CLEAN MINIMALIST STUDIO CARD (ZERO-LAG GPU COMPOSITED)
+       🛡️ FIT-TO-MONITOR STUDIO CARD (ZERO-LAG GPU COMPOSITED)
        ========================================================= */
     .glass-card {
       position: relative;
@@ -44,11 +51,13 @@
       background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(11, 17, 32, 0.97) 100%);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 20px;
-      padding: 28px 34px;
+      padding: 24px 32px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
       text-align: center;
-      width: 90%;
-      max-width: 760px;
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
       display: flex;
       flex-direction: column;
       transform: translateZ(0);
@@ -60,9 +69,10 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
       padding-bottom: 12px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
     }
 
     h2 {
@@ -99,16 +109,20 @@
       gap: 8px;
     }
 
+    .hud-main-workspace {
+      flex-shrink: 0;
+    }
+
     /* =========================================================
        🛰️ COMPACT TOP-BAR MODE WHEN WEBSITE IS VISIBLE
        ========================================================= */
     body.view-active {
       justify-content: flex-start;
-      padding-top: 8px;
+      padding: 8px 12px 0 12px;
     }
     body.view-active .glass-card {
-      width: 98%;
-      max-width: 985px;
+      width: 100%;
+      max-width: 100%;
       height: 194px;
       padding: 12px 22px;
       border-radius: 16px;
@@ -161,7 +175,6 @@
     }
     body.view-active .scanner-line {
       width: 92px;
-      animation-name: scanLaserCompact;
     }
     body.view-active .progress-wrapper {
       margin-top: 0;
@@ -178,19 +191,22 @@
       display: none;
       align-items: center;
       justify-content: center;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
       background: rgba(9, 13, 22, 0.65);
       padding: 14px 18px;
       border-radius: 14px;
       border: 1px solid rgba(255, 255, 255, 0.08);
       flex-wrap: wrap;
       gap: 12px;
-      max-height: 155px;
+      max-height: 195px;
       overflow-y: auto;
-      contain: content;
     }
-    .file-preview-box::-webkit-scrollbar { width: 5px; }
-    .file-preview-box::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 5px; }
+    .file-preview-box::-webkit-scrollbar,
+    .gallery-grid::-webkit-scrollbar { width: 6px; }
+    .file-preview-box::-webkit-scrollbar-track,
+    .gallery-grid::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.03); border-radius: 6px; }
+    .file-preview-box::-webkit-scrollbar-thumb,
+    .gallery-grid::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.7); border-radius: 6px; }
 
     .thumb-wrapper {
       position: relative;
@@ -201,8 +217,8 @@
       transform: translateY(-2px);
     }
     .thumb-wrapper img {
-      width: 52px;
-      height: 52px;
+      width: 58px;
+      height: 58px;
       border-radius: 10px;
       object-fit: contain;
       background: rgba(255, 255, 255, 0.04);
@@ -249,7 +265,7 @@
     .thumb-wrapper.completed .delete-btn { display: none; }
 
     /* =========================================================
-       🔬 CLEAN SCANNER PREVIEW (100% GPU COMPOSITED LASER)
+       🔬 CLEAN SCANNER PREVIEW
        ========================================================= */
     .processing-preview-container {
       display: none;
@@ -265,8 +281,6 @@
       border: 1px solid rgba(56, 189, 248, 0.45);
       background: rgba(9, 13, 22, 0.8);
       overflow: hidden;
-      contain: layout paint;
-      transform: translateZ(0);
     }
     .processing-preview-container img {
       width: 115px;
@@ -279,24 +293,15 @@
       position: absolute;
       top: 0;
       left: 50%;
+      transform: translateX(-50%);
       width: 120px;
       height: 3px;
       background: #38bdf8;
       box-shadow: 0 0 12px #38bdf8;
       border-radius: 4px;
-      will-change: transform;
-      transform: translate3d(-50%, 4px, 0);
-      backface-visibility: hidden;
       animation: scanLaser 1.6s ease-in-out infinite;
     }
-    @keyframes scanLaser {
-      0%, 100% { transform: translate3d(-50%, 4px, 0); }
-      50% { transform: translate3d(-50%, 118px, 0); }
-    }
-    @keyframes scanLaserCompact {
-      0%, 100% { transform: translate3d(-50%, 4px, 0); }
-      50% { transform: translate3d(-50%, 89px, 0); }
-    }
+    @keyframes scanLaser { 0%, 100% { top: 4px; } 50% { top: calc(100% - 7px); } }
 
     /* =========================================================
        ⚡ MODERN MINIMAL BUTTONS
@@ -307,6 +312,7 @@
       justify-content: center;
       align-items: center;
       margin-bottom: 14px;
+      flex-shrink: 0;
     }
 
     button {
@@ -375,7 +381,6 @@
       padding: 12px 16px;
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.08);
-      contain: layout style;
     }
     .progress-header-row {
       display: flex;
@@ -399,7 +404,6 @@
       border-radius: 8px;
       height: 10px;
       overflow: hidden;
-      contain: strict;
     }
     .progress-bar {
       width: 0%;
@@ -410,52 +414,58 @@
     }
 
     /* =========================================================
-       🎨 GALLERY BOX
+       🎨 FULL-FIT EXPANDING GALLERY BOX
        ========================================================= */
     .gallery-container {
-      margin-top: 12px;
+      margin-top: 8px;
       background: rgba(9, 13, 22, 0.65);
       border-radius: 14px;
-      padding: 14px;
+      padding: 16px;
       border: 1px solid rgba(255, 255, 255, 0.07);
-      max-height: 185px;
+      flex: 1;
+      min-height: 160px;
       display: flex;
       flex-direction: column;
       contain: content;
+      overflow: hidden;
     }
     .gallery-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-      padding-bottom: 8px;
-      margin-bottom: 10px;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+      flex-shrink: 0;
     }
     .gallery-header h3 {
       margin: 0;
-      font-size: 13px;
+      font-size: 13.5px;
       font-weight: 600;
       color: #cbd5e1;
     }
     .gallery-header button {
-      font-size: 11px;
+      font-size: 11.5px;
       padding: 5px 12px;
       border-radius: 8px;
     }
     .gallery-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+      gap: 12px;
       overflow-y: auto;
-      padding-right: 4px;
+      padding: 4px 6px 4px 2px;
+      flex: 1;
+      min-height: 0;
+      align-content: start;
     }
     .gallery-grid img {
       width: 100%;
-      height: 64px;
+      height: 86px;
       object-fit: contain;
-      border-radius: 8px;
+      border-radius: 10px;
       border: 1px solid rgba(255, 255, 255, 0.12);
-      transition: transform 0.15s ease, border-color 0.15s ease;
+      transition: transform 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
       cursor: pointer;
       background-image:
         linear-gradient(45deg, rgba(255,255,255,0.05) 25%, transparent 25%),
@@ -466,17 +476,18 @@
       background-position: 0 0, 0 6px, 6px -6px, -6px 0;
     }
     .gallery-grid img:hover {
-      transform: scale(1.08);
+      transform: scale(1.06);
       border-color: #38bdf8;
     }
 
     /* Footer */
     .app-footer {
-      margin-top: 16px;
+      margin-top: 14px;
       padding-top: 10px;
       border-top: 1px solid rgba(255, 255, 255, 0.06);
       font-size: 11px;
       color: #64748b;
+      flex-shrink: 0;
     }
     .app-footer strong {
       color: #94a3b8;
@@ -489,7 +500,7 @@
     .glass-card.drag-over {
       border-color: #38bdf8 !important;
       background: rgba(15, 23, 42, 0.98) !important;
-      transform: scale(1.01);
+      transform: scale(1.004);
     }
 
     /* =========================================================
