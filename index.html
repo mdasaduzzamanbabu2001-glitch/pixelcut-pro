@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Pro Studio Tool</title>
-  <!-- Google Font: Poppins -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -110,9 +109,6 @@
       font-family: 'Poppins', sans-serif;
     }
 
-    /* =========================================================
-       ✨ ELEGANT STUDIO CANVAS (LIGHT & TELEGRAM DARK)
-       ========================================================= */
     body {
       margin: 0;
       padding: 0;
@@ -133,9 +129,6 @@
       transition: background-color 0.22s ease, color 0.22s ease;
     }
 
-    /* =========================================================
-       🛡️ REFINED CERAMIC STUDIO CARD (ZERO-LAG GPU COMPOSITED)
-       ========================================================= */
     .glass-card {
       position: relative;
       z-index: 10;
@@ -149,9 +142,7 @@
       max-width: 780px;
       display: flex;
       flex-direction: column;
-      transform: translateZ(0);
-      will-change: transform, width, height;
-      transition: transform 0.14s cubic-bezier(0.2, 0, 0, 1), border-color 0.18s ease, background-color 0.22s ease, box-shadow 0.22s ease;
+      transition: border-color 0.18s ease, background-color 0.22s ease, box-shadow 0.22s ease;
     }
 
     .header-row {
@@ -219,9 +210,6 @@
       flex-wrap: nowrap;
     }
 
-    /* =========================================================
-       🛰️ COMPACT TOP-BAR MODE WHEN WEBSITE IS VISIBLE
-       ========================================================= */
     body.view-active {
       justify-content: flex-start;
       padding-top: 8px;
@@ -295,9 +283,6 @@
       margin-bottom: 0;
     }
 
-    /* =========================================================
-       🗂️ QUEUE PREVIEW BOX & THUMBNAILS
-       ========================================================= */
     .file-preview-box {
       display: none;
       align-items: center;
@@ -368,9 +353,6 @@
     }
     .thumb-wrapper.completed .delete-btn { display: none; }
 
-    /* =========================================================
-       🔬 SMOOTH GPU-COMPOSITED SCANNER PREVIEW
-       ========================================================= */
     .processing-preview-container {
       display: none;
       justify-content: center;
@@ -411,9 +393,6 @@
       50% { transform: translate3d(-50%, var(--scan-travel, 105px), 0); }
     }
 
-    /* =========================================================
-       ⚡ TELEGRAM-INSPIRED CLEAN BUTTONS & ICONS
-       ========================================================= */
     .btn-group {
       display: flex;
       gap: 12px;
@@ -523,7 +502,6 @@
       white-space: nowrap;
     }
 
-    /* Telegram Night Mode Pill Switch */
     .tg-switch {
       width: 28px;
       height: 16px;
@@ -550,9 +528,6 @@
       transform: translateX(12px);
     }
 
-    /* =========================================================
-       📊 CLEAN PROGRESS BAR
-       ========================================================= */
     .progress-wrapper {
       display: none;
       margin-top: 8px;
@@ -593,9 +568,6 @@
       border-radius: 8px;
     }
 
-    /* =========================================================
-       🎨 GALLERY BOX
-       ========================================================= */
     .gallery-container {
       margin-top: 4px;
       background: var(--surface-subtle);
@@ -667,7 +639,6 @@
       box-shadow: 0 4px 12px rgba(36, 129, 204, 0.16);
     }
 
-    /* Footer */
     .app-footer {
       margin-top: 16px;
       padding-top: 10px;
@@ -690,9 +661,6 @@
       transform: scale(1.01);
     }
 
-    /* =========================================================
-       🚀 ONLINE AUTO-UPDATE POPUP MODAL
-       ========================================================= */
     .update-modal-overlay {
       position: fixed;
       inset: 0;
@@ -929,7 +897,6 @@
     </div>
   </div>
 
-  <!-- 🔔 ONLINE AUTO-UPDATE POPUP MODAL -->
   <div class="update-modal-overlay" id="updateModalOverlay">
     <div class="update-modal-card">
       <div class="update-hero-icon" aria-hidden="true">
@@ -954,7 +921,6 @@
     </div>
   </div>
 
-  <!-- Toast Notification -->
   <div class="toast-banner" id="toastBanner"></div>
 
   <script src="renderer.js"></script>
