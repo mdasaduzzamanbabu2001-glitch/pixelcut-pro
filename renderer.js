@@ -13,6 +13,7 @@ const progressBar = document.getElementById('progressBar');
 const percentText = document.getElementById('percentText');
 
 const refreshGalleryBtn = document.getElementById('refreshGalleryBtn');
+const clearGalleryBtn = document.getElementById('clearGalleryBtn');
 const galleryGrid = document.getElementById('galleryGrid');
 const galleryContainer = document.getElementById('galleryContainer');
 
@@ -303,11 +304,19 @@ refreshGalleryBtn.addEventListener('click', () => {
     window.api.refreshGallery();
 });
 
+if (clearGalleryBtn) {
+    clearGalleryBtn.addEventListener('click', () => {
+        galleryRenderId++;
+        galleryThumbCache.clear();
+        galleryGrid.innerHTML = '<p style="font-size: 12px; color: #64748b; text-align: center; width: 100%; grid-column: 1 / -1; margin: 20px 0;">Gallery cleared. Click "Refresh" to view saved transparent PNGs.</p>';
+    });
+}
+
 window.api.onGalleryData(async (images) => {
     const currentRenderId = ++galleryRenderId;
     galleryGrid.innerHTML = ''; 
     if (!images || images.length === 0) {
-        galleryGrid.innerHTML = '<p style="font-size: 12px; color: #64748b; text-align: center; grid-column: 1 / -1; margin: 20px 0;">No processed transparent PNGs found yet.</p>';
+        galleryGrid.innerHTML = '<p style="font-size: 12px; color: #64748b; text-align: center; width: 100%; grid-column: 1 / -1; margin: 20px 0;">No processed transparent PNGs found yet.</p>';
         return;
     }
 
@@ -327,7 +336,6 @@ window.api.onGalleryData(async (images) => {
     });
     galleryGrid.appendChild(fragment);
 
-    // Decode 4 thumbnails at a time so 5000x5000px PNGs load ultra-smoothly without lag
     let cursor = 0;
     const workerCount = Math.min(4, imgElements.length);
     const workers = Array.from({ length: workerCount }, async () => {
