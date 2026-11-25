@@ -704,6 +704,7 @@ window.api.onStatusUpdate((message) => {
             progressWrapper.style.display = 'none';
             processingPreviewContainer.style.display = 'none';
             galleryContainer.style.display = 'flex';
+            setWebsiteViewMode(false);
 
             renderHistoryView('all');
             window.api.refreshGallery();
