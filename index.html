@@ -2,102 +2,192 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pro Studio Tool</title>
-  <!-- Google Font: Poppins -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-base: #f2f6fb;
+      --bg-glow-1: rgba(51, 144, 236, 0.11);
+      --bg-glow-2: rgba(99, 102, 241, 0.08);
+      --bg-dot: rgba(15, 23, 42, 0.045);
+
+      --card-bg: #ffffff;
+      --card-border: rgba(15, 23, 42, 0.08);
+      --card-shadow: 0 24px 60px -16px rgba(15, 35, 66, 0.12), 0 4px 16px -4px rgba(51, 144, 236, 0.07);
+
+      --surface-subtle: #f7f9fc;
+      --surface-hover: #eef5fc;
+      --border-subtle: #e6ecf4;
+      --divider: #edf2f7;
+
+      --text-primary: #17202e;
+      --text-secondary: #5a6778;
+      --text-muted: #8492a6;
+
+      --accent: #2481cc;
+      --accent-bright: #3390ec;
+      --accent-soft: #ebf5ff;
+      --accent-border: rgba(36, 129, 204, 0.22);
+
+      --btn-bg: #ffffff;
+      --btn-border: #dce5f0;
+      --btn-text: #1e293b;
+      --btn-icon: #526275;
+
+      --btn-disabled-bg: #f1f5f9;
+      --btn-disabled-border: #e2e8f0;
+      --btn-disabled-text: #94a3b8;
+
+      --danger-bg: #fff5f5;
+      --danger-border: #fecaca;
+      --danger-text: #dc2626;
+
+      --switch-track: #cbd5e1;
+      --switch-thumb: #ffffff;
+
+      --checker-a: rgba(15, 23, 42, 0.045);
+      --checker-b: #ffffff;
+
+      --modal-backdrop: rgba(15, 23, 42, 0.45);
+      --toast-bg: #ffffff;
+      --toast-text: #17202e;
+    }
+
+    body.dark-theme {
+      --bg-base: #0e1621;
+      --bg-glow-1: rgba(64, 167, 227, 0.12);
+      --bg-glow-2: rgba(59, 130, 246, 0.10);
+      --bg-dot: rgba(255, 255, 255, 0.035);
+
+      --card-bg: #17212b;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+
+      --surface-subtle: #111923;
+      --surface-hover: #232e3c;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --divider: rgba(255, 255, 255, 0.07);
+
+      --text-primary: #f1f5f9;
+      --text-secondary: #9fb0c3;
+      --text-muted: #6c7e93;
+
+      --accent: #40a7e3;
+      --accent-bright: #52b4ed;
+      --accent-soft: rgba(64, 167, 227, 0.14);
+      --accent-border: rgba(64, 167, 227, 0.32);
+
+      --btn-bg: #232e3c;
+      --btn-border: rgba(255, 255, 255, 0.1);
+      --btn-text: #eef4fa;
+      --btn-icon: #8ea4bc;
+
+      --btn-disabled-bg: rgba(17, 25, 35, 0.65);
+      --btn-disabled-border: rgba(255, 255, 255, 0.06);
+      --btn-disabled-text: rgba(255, 255, 255, 0.28);
+
+      --danger-bg: rgba(239, 68, 68, 0.12);
+      --danger-border: rgba(239, 68, 68, 0.35);
+      --danger-text: #f87171;
+
+      --switch-track: #3390ec;
+      --switch-thumb: #ffffff;
+
+      --checker-a: rgba(255, 255, 255, 0.06);
+      --checker-b: #111923;
+
+      --modal-backdrop: rgba(6, 10, 19, 0.8);
+      --toast-bg: #17212b;
+      --toast-text: #f8fafc;
+    }
+
     * {
       box-sizing: border-box;
       user-select: none;
       font-family: 'Poppins', sans-serif;
     }
 
-    /* =========================================================
-       ✨ MINIMAL, EYE-CATCHING & ZERO-LAG STUDIO BACKGROUND
-       ========================================================= */
-    html, body {
+    body {
       margin: 0;
       padding: 0;
-      height: 100%;
-      width: 100%;
+      height: 100vh;
+      width: 100vw;
       overflow: hidden;
-      background-color: #090d16;
-    }
-
-    body {
+      background-color: var(--bg-base);
       background-image:
-        radial-gradient(circle at 15% 20%, rgba(14, 165, 233, 0.12) 0%, transparent 45%),
-        radial-gradient(circle at 85% 80%, rgba(59, 130, 246, 0.12) 0%, transparent 45%),
-        linear-gradient(180deg, #0b1120 0%, #090d16 100%);
-      color: #f1f5f9;
+        radial-gradient(circle at 14% 18%, var(--bg-glow-1) 0%, transparent 45%),
+        radial-gradient(circle at 86% 82%, var(--bg-glow-2) 0%, transparent 45%),
+        radial-gradient(var(--bg-dot) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 24px 24px;
+      color: var(--text-primary);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      transition: background-color 0.25s ease, color 0.25s ease;
+      transition: background-color 0.22s ease, color 0.22s ease;
     }
 
-    /* =========================================================
-       🛡️ CLEAN MINIMALIST STUDIO CARD
-       ========================================================= */
     .glass-card {
       position: relative;
       z-index: 10;
-      background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(11, 17, 32, 0.97) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 20px;
-      padding: 28px 34px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 22px;
+      padding: 24px 32px;
+      box-shadow: var(--card-shadow);
       text-align: center;
-      width: 90%;
-      max-width: 760px;
+      width: 92%;
+      max-width: 780px;
       display: flex;
       flex-direction: column;
-      transform: translateZ(0);
-      will-change: transform;
-      transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), border-color 0.2s ease, background 0.25s ease, box-shadow 0.25s ease;
+      transition: border-color 0.18s ease, background-color 0.22s ease, box-shadow 0.22s ease;
     }
 
     .header-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
       margin-bottom: 18px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--divider);
+      gap: 12px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon-box {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--accent-soft);
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
 
     h2 {
       margin: 0;
       font-size: 19px;
       font-weight: 700;
-      letter-spacing: 0.3px;
-      color: #ffffff;
+      letter-spacing: -0.2px;
+      color: var(--text-primary);
       display: flex;
       align-items: center;
-      gap: 9px;
+      gap: 8px;
       white-space: nowrap;
     }
 
-    .brand-icon-badge {
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #0ea5e9, #2563eb);
-      color: #ffffff;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
-      flex-shrink: 0;
-    }
-
     h2 span.brand-gradient {
-      background: linear-gradient(90deg, #38bdf8, #3b82f6);
+      background: linear-gradient(135deg, var(--accent-bright) 0%, #1d5fd6 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -105,55 +195,21 @@
     .version-badge {
       font-size: 11px;
       font-weight: 600;
-      padding: 2px 8px;
+      padding: 2px 9px;
       border-radius: 20px;
-      background: rgba(56, 189, 248, 0.14);
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      color: #38bdf8;
-      letter-spacing: 0.3px;
+      background: var(--accent-soft);
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+      letter-spacing: 0.2px;
     }
 
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 7px;
-      flex-shrink: 0;
+      gap: 8px;
+      flex-wrap: nowrap;
     }
 
-    .ui-icon {
-      width: 15px;
-      height: 15px;
-      flex-shrink: 0;
-      display: block;
-    }
-
-    /* Telegram-style Night Mode Switch inside Theme Button */
-    .tg-switch {
-      position: relative;
-      width: 28px;
-      height: 16px;
-      border-radius: 999px;
-      background: #2b80c7;
-      transition: background-color 0.22s ease;
-      flex-shrink: 0;
-      margin-left: 2px;
-    }
-    .tg-switch-knob {
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: #ffffff;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-      transform: translateX(12px);
-      transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* =========================================================
-       🛰️ COMPACT TOP-BAR MODE WHEN WEBSITE IS VISIBLE
-       ========================================================= */
     body.view-active {
       justify-content: flex-start;
       padding-top: 8px;
@@ -168,18 +224,17 @@
     }
     body.view-active .header-row {
       margin-bottom: 6px;
-      padding-bottom: 6px;
+      padding-bottom: 8px;
+    }
+    body.view-active .brand-icon-box {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
     }
     body.view-active h2 {
       font-size: 16px;
     }
-    body.view-active .brand-icon-badge {
-      width: 24px;
-      height: 24px;
-      border-radius: 7px;
-    }
 
-    /* Keep gallery in DOM render cache instead of display:none to prevent 5000px image re-decoding lag */
     body.view-active .gallery-container,
     body.view-active .app-footer {
       position: absolute !important;
@@ -200,11 +255,46 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      height: 122px;
+      height: 120px;
+    }
+    body.view-active .hud-main-workspace.history-mode {
+      height: 76px;
+      gap: 10px;
+    }
+    body.view-active .hud-main-workspace.history-mode .file-preview-box {
+      max-height: 74px;
+      padding: 6px 10px;
+    }
+    body.view-active .hud-main-workspace.history-mode .history-bar {
+      order: 2;
+      margin-bottom: 0;
+      padding: 6px 10px;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    body.view-active .hud-main-workspace.history-mode .history-label {
+      display: none;
+    }
+    body.view-active .hud-main-workspace.history-mode.history-empty {
+      height: 44px;
+      justify-content: center;
+    }
+    body.view-active .hud-main-workspace.history-mode.history-empty .history-bar {
+      order: 0;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+    body.view-active .hud-main-workspace.history-mode.history-empty .history-label {
+      display: inline;
     }
     body.view-active .file-preview-box {
       margin-bottom: 0;
-      max-height: 112px;
+      max-height: 110px;
       padding: 8px 12px;
       flex: 1;
     }
@@ -213,11 +303,12 @@
       flex-shrink: 0;
     }
     body.view-active .processing-preview-container img {
-      width: 86px;
-      height: 86px;
+      width: 84px;
+      height: 84px;
     }
     body.view-active .scanner-line {
-      width: 92px;
+      width: 90px;
+      --scan-travel: 76px;
     }
     body.view-active .progress-wrapper {
       margin-top: 0;
@@ -227,29 +318,129 @@
       margin-bottom: 0;
     }
 
-    /* =========================================================
-       🗂️ QUEUE PREVIEW BOX & THUMBNAILS
-       ========================================================= */
+    /* Batch Checkbox History Bar */
+    .history-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+
+    .history-summary {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .history-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-right: 2px;
+    }
+
+    .history-empty-note {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .history-bar button.history-pill {
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      gap: 4px;
+      border: 1px solid var(--btn-border);
+      background: var(--btn-bg);
+      color: var(--text-secondary);
+    }
+
+    .history-bar button.history-pill.active {
+      background: var(--accent-soft);
+      border-color: var(--accent-border);
+      color: var(--accent);
+    }
+
+    .history-bar button.history-pill.completed-pill.active {
+      background: rgba(16, 185, 129, 0.14);
+      border-color: rgba(16, 185, 129, 0.45);
+      color: #059669;
+    }
+
+    body.dark-theme .history-bar button.history-pill.completed-pill.active {
+      color: #34d399;
+    }
+
+    .history-bar button.history-pill.failed-pill.active {
+      background: var(--danger-bg);
+      border-color: var(--danger-border);
+      color: var(--danger-text);
+    }
+
+    #clearHistoryBtn {
+      height: 28px;
+      padding: 0 11px;
+      border-radius: 9px;
+      font-size: 11px;
+      font-weight: 600;
+      gap: 5px;
+      background: var(--danger-bg);
+      border-color: var(--danger-border);
+      color: var(--danger-text);
+      white-space: nowrap;
+    }
+    #clearHistoryBtn svg {
+      color: var(--danger-text);
+    }
+    #clearHistoryBtn:hover:not(:disabled) {
+      background: #fee2e2;
+      border-color: #f87171;
+      color: #b91c1c;
+    }
+    #clearHistoryBtn:hover:not(:disabled) svg {
+      color: #b91c1c;
+    }
+    body.dark-theme #clearHistoryBtn:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.22);
+      color: #fca5a5;
+    }
+    body.dark-theme #clearHistoryBtn:hover:not(:disabled) svg {
+      color: #fca5a5;
+    }
+    #clearHistoryBtn:disabled {
+      background: var(--btn-disabled-bg);
+      border-color: var(--btn-disabled-border);
+      color: var(--btn-disabled-text);
+    }
+    #clearHistoryBtn:disabled svg {
+      color: var(--btn-disabled-text);
+    }
+
     .file-preview-box {
       display: none;
       align-items: center;
       justify-content: center;
-      margin-bottom: 18px;
-      background: rgba(9, 13, 22, 0.65);
-      padding: 14px 18px;
+      margin-bottom: 14px;
+      background: var(--surface-subtle);
+      padding: 12px 16px;
       border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-subtle);
       flex-wrap: wrap;
       gap: 12px;
-      max-height: 155px;
+      max-height: 138px;
       overflow-y: auto;
     }
-    .file-preview-box::-webkit-scrollbar,
-    .gallery-grid::-webkit-scrollbar { width: 5px; }
-    .file-preview-box::-webkit-scrollbar-track,
-    .gallery-grid::-webkit-scrollbar-track { background: transparent; }
-    .file-preview-box::-webkit-scrollbar-thumb,
-    .gallery-grid::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.6); border-radius: 6px; }
+    .file-preview-box::-webkit-scrollbar { width: 5px; }
+    .file-preview-box::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 5px; }
 
     .thumb-wrapper {
       position: relative;
@@ -264,8 +455,8 @@
       height: 52px;
       border-radius: 10px;
       object-fit: contain;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1.5px solid rgba(56, 189, 248, 0.5);
+      background: var(--card-bg);
+      border: 1.5px solid var(--accent-border);
       display: block;
     }
     .delete-btn {
@@ -281,8 +472,8 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: 0.15s;
-      border: 1.5px solid #fff;
+      transition: transform 0.15s ease, background-color 0.15s ease;
+      border: 1.5px solid var(--card-bg);
       z-index: 10;
     }
     .delete-btn:hover { background: #dc2626; transform: scale(1.12); }
@@ -290,13 +481,14 @@
     .checkmark {
       position: absolute;
       inset: 0;
-      background: rgba(16, 185, 129, 0.48);
+      background: rgba(16, 185, 129, 0.85);
       border-radius: 10px;
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 5;
-      color: #fff;
+      color: #ffffff;
+      pointer-events: none;
     }
     .thumb-wrapper.completed .checkmark {
       display: flex;
@@ -304,9 +496,24 @@
     }
     .thumb-wrapper.completed .delete-btn { display: none; }
 
-    /* =========================================================
-       🔬 CLEAN SCANNER PREVIEW
-       ========================================================= */
+    .failmark {
+      position: absolute;
+      inset: 0;
+      background: rgba(239, 68, 68, 0.85);
+      border-radius: 10px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+      color: #ffffff;
+      pointer-events: none;
+    }
+    .thumb-wrapper.failed .failmark {
+      display: flex;
+      border: 1.5px solid #ef4444;
+    }
+    .thumb-wrapper.failed .delete-btn { display: none; }
+
     .processing-preview-container {
       display: none;
       justify-content: center;
@@ -318,135 +525,178 @@
       position: relative;
       padding: 5px;
       border-radius: 14px;
-      border: 1px solid rgba(56, 189, 248, 0.45);
-      background: rgba(9, 13, 22, 0.8);
+      border: 1.5px solid var(--accent-border);
+      background: var(--surface-subtle);
       overflow: hidden;
     }
     .processing-preview-container img {
-      width: 115px;
-      height: 115px;
+      width: 112px;
+      height: 112px;
       border-radius: 10px;
       object-fit: contain;
       display: block;
     }
     .scanner-line {
       position: absolute;
-      top: 0;
+      top: 5px;
       left: 50%;
-      transform: translateX(-50%);
-      width: 120px;
+      width: 116px;
       height: 3px;
-      background: #38bdf8;
-      box-shadow: 0 0 12px #38bdf8;
+      background: linear-gradient(90deg, transparent, var(--accent-bright), #ffffff, var(--accent-bright), transparent);
+      box-shadow: 0 0 10px var(--accent-bright);
       border-radius: 4px;
+      will-change: transform;
+      --scan-travel: 105px;
       animation: scanLaser 1.6s ease-in-out infinite;
     }
-    @keyframes scanLaser { 0%, 100% { top: 4px; } 50% { top: calc(100% - 7px); } }
+    @keyframes scanLaser {
+      0%, 100% { transform: translate3d(-50%, 0, 0); }
+      50% { transform: translate3d(-50%, var(--scan-travel, 105px), 0); }
+    }
 
-    /* =========================================================
-       ⚡ MODERN MINIMAL BUTTONS (WITH TELEGRAM-CLEAN SVG ICONS)
-       ========================================================= */
     .btn-group {
       display: flex;
       gap: 12px;
       justify-content: center;
       align-items: center;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
     button {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 7px;
-      padding: 11px 22px;
-      color: #f8fafc;
-      background: rgba(30, 41, 59, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      gap: 8px;
+      padding: 10px 22px;
+      color: var(--btn-text);
+      background: var(--btn-bg);
+      border: 1px solid var(--btn-border);
       border-radius: 12px;
       font-size: 13px;
       font-weight: 600;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.2px;
       cursor: pointer;
-      white-space: nowrap;
-      transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+      transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    }
+    button svg {
+      color: var(--btn-icon);
+      flex-shrink: 0;
+      transition: color 0.15s ease;
     }
     button:hover:not(:disabled) {
-      transform: translateY(-1.5px);
-      background: rgba(51, 65, 85, 0.95);
-      border-color: rgba(56, 189, 248, 0.5);
+      transform: translateY(-1px);
+      background: var(--surface-hover);
+      border-color: var(--accent-border);
+      color: var(--accent);
+    }
+    button:hover:not(:disabled) svg {
+      color: var(--accent);
     }
     button:active:not(:disabled) {
       transform: translateY(0px);
     }
     button:disabled {
-      background: rgba(15, 23, 42, 0.5);
-      border-color: rgba(255, 255, 255, 0.05);
-      color: rgba(255, 255, 255, 0.28);
+      background: var(--btn-disabled-bg);
+      border-color: var(--btn-disabled-border);
+      color: var(--btn-disabled-text);
       cursor: not-allowed;
+      box-shadow: none;
+    }
+    button:disabled svg {
+      color: var(--btn-disabled-text);
     }
 
     #selectFileBtn {
-      border-color: rgba(56, 189, 248, 0.35);
+      border-color: var(--accent-border);
+      box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);
     }
-    #selectFileBtn .ui-icon {
-      color: #38bdf8;
+    #selectFileBtn svg {
+      color: var(--accent);
     }
+
     #startBtn:not(:disabled) {
-      background: linear-gradient(135deg, #0284c7, #2563eb);
+      background: linear-gradient(135deg, #3390ec 0%, #246bfd 100%);
       color: #ffffff;
-      border-color: rgba(255, 255, 255, 0.2);
-      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+      border-color: transparent;
+      box-shadow: 0 8px 22px -4px rgba(36, 107, 253, 0.42);
+    }
+    #startBtn:not(:disabled) svg {
+      color: #ffffff;
     }
     #startBtn:not(:disabled):hover {
-      background: linear-gradient(135deg, #0ea5e9, #3b82f6);
-      box-shadow: 0 10px 25px rgba(14, 165, 233, 0.45);
+      background: linear-gradient(135deg, #3f9bf4 0%, #2f74ff 100%);
+      color: #ffffff;
+      box-shadow: 0 10px 26px -4px rgba(36, 107, 253, 0.52);
     }
+    #startBtn:not(:disabled):hover svg {
+      color: #ffffff;
+    }
+
     #clearAllBtn {
-      border-color: rgba(239, 68, 68, 0.32);
-      color: #fca5a5;
       display: none;
+      background: var(--danger-bg);
+      border-color: var(--danger-border);
+      color: var(--danger-text);
     }
-    #clearAllBtn:hover {
-      border-color: rgba(239, 68, 68, 0.65);
-      background: rgba(239, 68, 68, 0.12);
+    #clearAllBtn svg {
+      color: var(--danger-text);
     }
-    #toggleViewBtn, #checkUpdateBtn, #themeToggleBtn {
-      padding: 6px 11px;
+    #clearAllBtn:hover:not(:disabled) {
+      background: #fee2e2;
+      border-color: #f87171;
+      color: #b91c1c;
+    }
+    body.dark-theme #clearAllBtn:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.22);
+      color: #fca5a5;
+    }
+
+    .header-pill-btn {
+      padding: 6px 12px;
       font-size: 11.5px;
       font-weight: 500;
       border-radius: 10px;
-      background: rgba(255, 255, 255, 0.05);
-      color: #cbd5e1;
+      background: var(--surface-subtle);
+      border-color: var(--border-subtle);
+      color: var(--text-secondary);
       gap: 6px;
-    }
-    #toggleViewBtn .ui-icon,
-    #checkUpdateBtn .ui-icon,
-    #themeToggleBtn .ui-icon {
-      width: 14px;
-      height: 14px;
-      color: #94a3b8;
-    }
-    #toggleViewBtn:hover, #checkUpdateBtn:hover, #themeToggleBtn:hover {
-      color: #ffffff;
-    }
-    #toggleViewBtn:hover .ui-icon,
-    #checkUpdateBtn:hover .ui-icon,
-    #themeToggleBtn:hover .ui-icon {
-      color: #38bdf8;
+      white-space: nowrap;
     }
 
-    /* =========================================================
-       📊 CLEAN PROGRESS BAR
-       ========================================================= */
+    .tg-switch {
+      width: 28px;
+      height: 16px;
+      border-radius: 999px;
+      background: var(--switch-track);
+      position: relative;
+      display: inline-block;
+      margin-left: 2px;
+      transition: background-color 0.2s ease;
+    }
+    .tg-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--switch-thumb);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    body.dark-theme .tg-switch::after {
+      transform: translateX(12px);
+    }
+
     .progress-wrapper {
       display: none;
       margin-top: 8px;
       text-align: left;
-      background: rgba(9, 13, 22, 0.75);
+      background: var(--surface-subtle);
       padding: 12px 16px;
       border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-subtle);
     }
     .progress-header-row {
       display: flex;
@@ -457,37 +707,34 @@
     .progress-text {
       font-size: 12.5px;
       font-weight: 600;
-      color: #38bdf8;
+      color: var(--accent);
     }
     .percent-text {
       font-size: 13px;
       font-weight: 700;
-      color: #ffffff;
+      color: var(--text-primary);
     }
     .progress-bar-container {
       width: 100%;
-      background: rgba(255, 255, 255, 0.07);
+      background: var(--divider);
       border-radius: 8px;
-      height: 10px;
+      height: 9px;
       overflow: hidden;
     }
     .progress-bar {
       width: 0%;
       height: 100%;
-      background: linear-gradient(90deg, #0ea5e9, #3b82f6);
+      background: linear-gradient(90deg, #3390ec, #246bfd);
       transition: width 0.25s ease;
       border-radius: 8px;
     }
 
-    /* =========================================================
-       🎨 GALLERY BOX (ORIGINAL SIZE PRESERVED)
-       ========================================================= */
     .gallery-container {
-      margin-top: 12px;
-      background: rgba(9, 13, 22, 0.65);
-      border-radius: 14px;
-      padding: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.07);
+      margin-top: 4px;
+      background: var(--surface-subtle);
+      border-radius: 16px;
+      padding: 14px 16px;
+      border: 1px solid var(--border-subtle);
       max-height: 185px;
       display: flex;
       flex-direction: column;
@@ -497,45 +744,28 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-      padding-bottom: 8px;
+      border-bottom: 1px solid var(--divider);
+      padding-bottom: 9px;
       margin-bottom: 10px;
     }
     .gallery-header h3 {
       margin: 0;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 600;
-      color: #cbd5e1;
+      color: var(--text-primary);
       display: inline-flex;
       align-items: center;
       gap: 7px;
     }
-    .gallery-header h3 .ui-icon {
-      color: #38bdf8;
-    }
-    .gallery-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .gallery-header h3 svg {
+      color: var(--accent);
     }
     .gallery-header button {
       font-size: 11px;
       font-weight: 500;
-      padding: 5px 11px;
-      border-radius: 8px;
+      padding: 5px 12px;
+      border-radius: 9px;
       gap: 5px;
-    }
-    .gallery-header button .ui-icon {
-      width: 13px;
-      height: 13px;
-    }
-    #clearGalleryBtn {
-      border-color: rgba(239, 68, 68, 0.28);
-      color: #fca5a5;
-    }
-    #clearGalleryBtn:hover {
-      border-color: rgba(239, 68, 68, 0.65);
-      background: rgba(239, 68, 68, 0.12);
     }
     .gallery-grid {
       display: grid;
@@ -544,113 +774,117 @@
       overflow-y: auto;
       padding-right: 4px;
     }
+    .gallery-grid::-webkit-scrollbar { width: 5px; }
+    .gallery-grid::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.4); border-radius: 5px; }
+
     .gallery-grid img {
       width: 100%;
       height: 64px;
       object-fit: contain;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      transition: transform 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+      border-radius: 10px;
+      border: 1px solid var(--border-subtle);
+      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
       cursor: pointer;
+      background-color: var(--checker-b);
       background-image:
-        linear-gradient(45deg, rgba(255,255,255,0.05) 25%, transparent 25%),
-        linear-gradient(-45deg, rgba(255,255,255,0.05) 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.05) 75%),
-        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.05) 75%);
+        linear-gradient(45deg, var(--checker-a) 25%, transparent 25%),
+        linear-gradient(-45deg, var(--checker-a) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, var(--checker-a) 75%),
+        linear-gradient(-45deg, transparent 75%, var(--checker-a) 75%);
       background-size: 12px 12px;
       background-position: 0 0, 0 6px, 6px -6px, -6px 0;
     }
     .gallery-grid img:hover {
-      transform: scale(1.08);
-      border-color: #38bdf8;
+      transform: scale(1.06);
+      border-color: var(--accent);
+      box-shadow: 0 4px 12px rgba(36, 129, 204, 0.16);
     }
 
-    /* Footer */
     .app-footer {
-      margin-top: 16px;
+      margin-top: 14px;
       padding-top: 10px;
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      border-top: 1px solid var(--divider);
       font-size: 11px;
-      color: #64748b;
+      color: var(--text-muted);
     }
     .app-footer strong {
-      color: #94a3b8;
+      color: var(--text-secondary);
+      font-weight: 600;
     }
     .app-footer .highlight {
-      color: #38bdf8;
+      color: var(--accent);
       font-weight: 600;
     }
 
     .glass-card.drag-over {
-      border-color: #38bdf8 !important;
-      background: rgba(15, 23, 42, 0.98) !important;
+      border-color: var(--accent-bright) !important;
+      box-shadow: 0 0 0 3px var(--accent-soft), var(--card-shadow) !important;
       transform: scale(1.01);
     }
 
-    /* =========================================================
-       🚀 ONLINE AUTO-UPDATE POPUP MODAL
-       ========================================================= */
     .update-modal-overlay {
       position: fixed;
       inset: 0;
       z-index: 9999;
-      background: rgba(6, 10, 19, 0.82);
-      backdrop-filter: blur(6px);
+      background: var(--modal-backdrop);
       display: none;
       align-items: center;
       justify-content: center;
     }
     .update-modal-card {
-      background: linear-gradient(180deg, #0f172a 0%, #0b1120 100%);
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      border-radius: 18px;
-      padding: 24px 28px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 26px 28px;
       width: 92%;
       max-width: 440px;
       text-align: center;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.28);
       animation: popIn 0.2s ease-out;
-    }
-    .update-modal-icon-circle {
-      width: 52px;
-      height: 52px;
-      margin: 0 auto 12px auto;
-      border-radius: 16px;
-      background: rgba(56, 189, 248, 0.14);
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      color: #38bdf8;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
     @keyframes popIn {
       from { transform: scale(0.92); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
     }
+    .update-hero-icon {
+      width: 52px;
+      height: 52px;
+      margin: 0 auto 12px auto;
+      border-radius: 16px;
+      background: var(--accent-soft);
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
     .update-modal-title {
       margin: 0 0 8px 0;
       font-size: 18px;
       font-weight: 700;
-      color: #ffffff;
+      color: var(--text-primary);
     }
     .update-version-pill {
       display: inline-block;
-      background: rgba(16, 185, 129, 0.15);
-      border: 1px solid rgba(16, 185, 129, 0.4);
-      color: #34d399;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #059669;
       font-size: 12px;
       font-weight: 600;
       padding: 4px 12px;
       border-radius: 20px;
       margin-bottom: 12px;
     }
+    body.dark-theme .update-version-pill {
+      color: #34d399;
+    }
     .update-notes-box {
-      background: rgba(9, 13, 22, 0.75);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 10px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
       padding: 10px 14px;
       font-size: 12px;
-      color: #cbd5e1;
+      color: var(--text-secondary);
       text-align: left;
       margin-bottom: 16px;
       max-height: 90px;
@@ -666,314 +900,34 @@
       background: linear-gradient(135deg, #10b981, #059669);
       color: #ffffff;
       border: none;
-      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.32);
       flex: 1;
     }
+    #confirmUpdateBtn svg {
+      color: #ffffff;
+    }
     #confirmUpdateBtn:hover:not(:disabled) {
-      background: linear-gradient(135deg, #34d399, #10b981);
+      background: linear-gradient(135deg, #059669, #047857);
+      color: #ffffff;
     }
     #closeUpdateModalBtn {
-      background: rgba(255, 255, 255, 0.06);
-      color: #94a3b8;
+      background: var(--surface-subtle);
+      color: var(--text-secondary);
     }
     .toast-banner {
       position: fixed;
-      bottom: 18px;
-      right: 18px;
+      bottom: 16px;
+      right: 16px;
       z-index: 9998;
-      background: rgba(15, 23, 42, 0.96);
-      border: 1px solid rgba(56, 189, 248, 0.4);
-      color: #f8fafc;
+      background: var(--toast-bg);
+      border: 1px solid var(--accent-border);
+      color: var(--toast-text);
       padding: 10px 16px;
       border-radius: 12px;
       font-size: 12px;
       font-weight: 500;
       display: none;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    }
-
-    /* =========================================================
-       ☀️ ELEGANT LIGHT MODE THEME (TELEGRAM-INSPIRED CLEAN UI)
-       ========================================================= */
-    html.light-mode,
-    body.light-mode {
-      background-color: #edf2f8;
-      color: #0f172a;
-    }
-
-    body.light-mode {
-      background-image:
-        radial-gradient(circle at 18% 18%, rgba(56, 189, 248, 0.22) 0%, transparent 42%),
-        radial-gradient(circle at 82% 82%, rgba(99, 102, 241, 0.14) 0%, transparent 42%),
-        linear-gradient(180deg, #f5f8fc 0%, #e6eef7 100%);
-    }
-
-    body.light-mode .glass-card {
-      background: rgba(255, 255, 255, 0.97);
-      border-color: rgba(15, 23, 42, 0.08);
-      box-shadow:
-        0 25px 60px -15px rgba(15, 23, 42, 0.13),
-        0 4px 16px -2px rgba(14, 165, 233, 0.07);
-    }
-
-    body.light-mode .glass-card.drag-over {
-      border-color: #0284c7 !important;
-      background: #ffffff !important;
-    }
-
-    body.light-mode .header-row {
-      border-bottom-color: #e2e8f0;
-    }
-
-    body.light-mode h2 {
-      color: #0f172a;
-    }
-
-    body.light-mode h2 span.brand-gradient {
-      background: linear-gradient(90deg, #0284c7, #2563eb);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    body.light-mode .version-badge {
-      background: #e0f2fe;
-      border-color: rgba(2, 132, 199, 0.22);
-      color: #0369a1;
-    }
-
-    body.light-mode .tg-switch {
-      background: #cbd5e1;
-    }
-    body.light-mode .tg-switch-knob {
-      transform: translateX(0px);
-      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
-    }
-
-    body.light-mode button {
-      color: #1e293b;
-      background: #ffffff;
-      border-color: #e2e8f0;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    }
-
-    body.light-mode button:hover:not(:disabled) {
-      background: #f8fafc;
-      border-color: #bae6fd;
-      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.1);
-    }
-
-    body.light-mode button:disabled {
-      background: #f1f5f9;
-      border-color: #e2e8f0;
-      color: #94a3b8;
-      box-shadow: none;
-    }
-
-    body.light-mode #selectFileBtn {
-      background: #ffffff;
-      border-color: rgba(2, 132, 199, 0.35);
-      color: #0f172a;
-      box-shadow: 0 2px 10px rgba(2, 132, 199, 0.08);
-    }
-
-    body.light-mode #selectFileBtn:hover {
-      background: #f0f9ff;
-      border-color: #0284c7;
-    }
-
-    body.light-mode #selectFileBtn .ui-icon {
-      color: #0284c7;
-    }
-
-    body.light-mode #startBtn:not(:disabled) {
-      background: linear-gradient(135deg, #0ea5e9, #2563eb);
-      border-color: transparent;
-      color: #ffffff;
-      box-shadow: 0 8px 22px rgba(37, 99, 235, 0.28);
-    }
-
-    body.light-mode #startBtn:not(:disabled):hover {
-      background: linear-gradient(135deg, #0284c7, #1d4ed8);
-      box-shadow: 0 10px 26px rgba(37, 99, 235, 0.36);
-    }
-
-    body.light-mode #clearAllBtn,
-    body.light-mode #clearGalleryBtn {
-      background: #ffffff;
-      border-color: rgba(239, 68, 68, 0.28);
-      color: #dc2626;
-    }
-
-    body.light-mode #clearAllBtn:hover,
-    body.light-mode #clearGalleryBtn:hover {
-      background: #fef2f2;
-      border-color: #ef4444;
-      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
-    }
-
-    body.light-mode #toggleViewBtn,
-    body.light-mode #checkUpdateBtn,
-    body.light-mode #themeToggleBtn {
-      background: #f8fafc;
-      border-color: #e2e8f0;
-      color: #334155;
-      box-shadow: none;
-    }
-
-    body.light-mode #toggleViewBtn .ui-icon,
-    body.light-mode #checkUpdateBtn .ui-icon,
-    body.light-mode #themeToggleBtn .ui-icon {
-      color: #64748b;
-    }
-
-    body.light-mode #toggleViewBtn:hover,
-    body.light-mode #checkUpdateBtn:hover,
-    body.light-mode #themeToggleBtn:hover {
-      background: #f1f5f9;
-      border-color: #cbd5e1;
-      color: #0f172a;
-    }
-
-    body.light-mode #toggleViewBtn:hover .ui-icon,
-    body.light-mode #checkUpdateBtn:hover .ui-icon,
-    body.light-mode #themeToggleBtn:hover .ui-icon {
-      color: #0284c7;
-    }
-
-    body.light-mode .file-preview-box {
-      background: #f8fafc;
-      border-color: #e2e8f0;
-    }
-
-    body.light-mode .file-preview-box::-webkit-scrollbar-thumb,
-    body.light-mode .gallery-grid::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-    }
-    body.light-mode .file-preview-box::-webkit-scrollbar-thumb:hover,
-    body.light-mode .gallery-grid::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
-    }
-
-    body.light-mode .thumb-wrapper img {
-      background: #ffffff;
-      border-color: rgba(2, 132, 199, 0.4);
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
-    }
-
-    body.light-mode #previewCountText {
-      color: #0284c7 !important;
-    }
-
-    body.light-mode .processing-image-wrapper {
-      background: #f8fafc;
-      border-color: rgba(2, 132, 199, 0.45);
-    }
-
-    body.light-mode .progress-wrapper {
-      background: #f8fafc;
-      border-color: #e2e8f0;
-    }
-
-    body.light-mode .progress-text {
-      color: #0284c7;
-    }
-
-    body.light-mode .percent-text {
-      color: #0f172a;
-    }
-
-    body.light-mode .progress-bar-container {
-      background: #e2e8f0;
-    }
-
-    body.light-mode .gallery-container {
-      background: #f8fafc;
-      border-color: #e2e8f0;
-    }
-
-    body.light-mode .gallery-header {
-      border-bottom-color: #e2e8f0;
-    }
-
-    body.light-mode .gallery-header h3 {
-      color: #1e293b;
-    }
-
-    body.light-mode .gallery-header h3 .ui-icon {
-      color: #0284c7;
-    }
-
-    body.light-mode .gallery-grid img {
-      border-color: #cbd5e1;
-      background-color: #e2e8f0;
-      background-image:
-        linear-gradient(45deg, rgba(15, 23, 42, 0.06) 25%, transparent 25%),
-        linear-gradient(-45deg, rgba(15, 23, 42, 0.06) 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, rgba(15, 23, 42, 0.06) 75%),
-        linear-gradient(-45deg, transparent 75%, rgba(15, 23, 42, 0.06) 75%);
-    }
-
-    body.light-mode .gallery-grid img:hover {
-      border-color: #0284c7;
-      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.18);
-    }
-
-    body.light-mode .app-footer {
-      border-top-color: #e2e8f0;
-      color: #64748b;
-    }
-
-    body.light-mode .app-footer strong {
-      color: #334155;
-    }
-
-    body.light-mode .app-footer .highlight {
-      color: #0284c7;
-    }
-
-    body.light-mode .update-modal-overlay {
-      background: rgba(15, 23, 42, 0.4);
-    }
-
-    body.light-mode .update-modal-card {
-      background: #ffffff;
-      border-color: #e2e8f0;
-      box-shadow: 0 25px 60px rgba(15, 23, 42, 0.2);
-    }
-
-    body.light-mode .update-modal-icon-circle {
-      background: #e0f2fe;
-      border-color: rgba(2, 132, 199, 0.25);
-      color: #0284c7;
-    }
-
-    body.light-mode .update-modal-title {
-      color: #0f172a;
-    }
-
-    body.light-mode .update-version-pill {
-      background: #ecfdf5;
-      border-color: rgba(16, 185, 129, 0.35);
-      color: #059669;
-    }
-
-    body.light-mode .update-notes-box {
-      background: #f8fafc;
-      border-color: #e2e8f0;
-      color: #334155;
-    }
-
-    body.light-mode #closeUpdateModalBtn {
-      background: #f1f5f9;
-      border-color: #e2e8f0;
-      color: #475569;
-    }
-
-    body.light-mode .toast-banner {
-      background: #ffffff;
-      border-color: #cbd5e1;
-      color: #0f172a;
-      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
     }
   </style>
 </head>
@@ -981,53 +935,74 @@
 
   <div class="glass-card" id="mainHudCard">
     <div class="header-row">
-      <h2>
-        <span class="brand-icon-badge" aria-hidden="true">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-            <polyline points="2 17 12 22 22 17"/>
-            <polyline points="2 12 12 17 22 12"/>
+      <div class="brand-group">
+        <span class="brand-icon-box" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3l2 5.5L19.5 10.5 14 12.5 12 18l-2-5.5L4.5 10.5 10 8.5 12 3z"/>
           </svg>
         </span>
-        <span><span class="brand-gradient">Pixelcut Studio</span> Pro</span>
-        <span class="version-badge" id="appVersionBadge">v1.0.0</span>
-      </h2>
+        <h2>
+          <span class="brand-gradient">Pixelcut Studio</span> Pro
+          <span class="version-badge" id="appVersionBadge">v1.0.0</span>
+        </h2>
+      </div>
+
       <div class="header-actions">
-        <button id="themeToggleBtn" title="Toggle Night / Light Mode">
-          <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <button id="themeToggleBtn" class="header-pill-btn" title="Switch Night Mode">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
-          <span class="btn-label">Night</span>
-          <span class="tg-switch" aria-hidden="true"><span class="tg-switch-knob"></span></span>
+          <span id="themeToggleLabel">Night</span>
+          <span class="tg-switch" aria-hidden="true"></span>
         </button>
 
-        <button id="checkUpdateBtn" title="Check for latest online update">
-          <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
-            <polyline points="21 3 21 9 15 9"/>
+        <button id="checkUpdateBtn" class="header-pill-btn" title="Check for latest online update">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+            <path d="M16 16h5v5"/>
           </svg>
-          <span class="btn-label">Update</span>
+          <span>Update</span>
         </button>
 
-        <button id="toggleViewBtn">
-          <svg class="ui-icon" id="toggleViewIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="2" y1="12" x2="22" y2="12"/>
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        <button id="toggleViewBtn" class="header-pill-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M3.6 9h16.8M3.6 15h16.8"/>
+            <path d="M12 3a14.5 14.5 0 0 1 0 18M12 3a14.5 14.5 0 0 0 0 18"/>
           </svg>
-          <span class="btn-label" id="toggleViewLabel">Show Website / Login</span>
+          <span>Show Website / Login</span>
         </button>
       </div>
     </div>
 
     <input type="file" id="fileInput" accept="image/*" multiple style="display: none;">
 
-    <div class="hud-main-workspace">
+    <div class="hud-main-workspace" id="hudMainWorkspace">
       <div class="processing-preview-container" id="processingPreviewContainer">
         <div class="processing-image-wrapper">
           <img id="processingImage" src="" alt="Processing">
           <div class="scanner-line" id="scannerLine"></div>
         </div>
+      </div>
+
+      <div class="history-bar" id="historyBar">
+        <div class="history-summary">
+          <span class="history-label">Last Batch History:</span>
+          <span class="history-empty-note" id="historyEmptyNote">No recent batch yet</span>
+          <button type="button" class="history-pill active" id="filterAllBtn" style="display: none;">All (0)</button>
+          <button type="button" class="history-pill completed-pill" id="filterCompletedBtn" style="display: none;">Completed (0)</button>
+          <button type="button" class="history-pill failed-pill" id="filterFailedBtn" style="display: none;">Incomplete (0)</button>
+        </div>
+        <button type="button" id="clearHistoryBtn" title="Clear checkbox history" disabled>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18"/>
+            <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          </svg>
+          <span>Clear History</span>
+        </button>
       </div>
 
       <div class="file-preview-box" id="filePreviewBox"></div>
@@ -1045,65 +1020,51 @@
 
     <div class="btn-group" id="controls">
       <button id="selectFileBtn">
-        <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-          <line x1="12" y1="11" x2="12" y2="17"/>
-          <line x1="9" y1="14" x2="15" y2="14"/>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
         </svg>
-        <span class="btn-label">Select Images</span>
+        <span>Select Images</span>
       </button>
 
       <button id="startBtn" disabled>
-        <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="5 3 19 12 5 21 5 3"/>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
         </svg>
-        <span class="btn-label">Start Processing</span>
+        <span>Start Processing</span>
       </button>
 
       <button id="clearAllBtn">
-        <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="3 6 5 6 21 6"/>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18"/>
+          <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/>
           <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-          <path d="M10 11v6"/>
-          <path d="M14 11v6"/>
-          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
         </svg>
-        <span class="btn-label">Clear All</span>
+        <span>Clear All</span>
       </button>
     </div>
 
     <div class="gallery-container" id="galleryContainer">
       <div class="gallery-header">
         <h3>
-          <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-            <circle cx="8.5" cy="8.5" r="1.5"/>
-            <polyline points="21 15 16 10 5 21"/>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="16" rx="2.5"/>
+            <circle cx="8.5" cy="9.5" r="1.5"/>
+            <path d="M21 15l-4.5-4.5a1.5 1.5 0 0 0-2.1 0L6 19"/>
           </svg>
           <span>Processed Output Gallery</span>
         </h3>
-        <div class="gallery-actions">
-          <button id="refreshGalleryBtn">
-            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
-              <polyline points="21 3 21 9 15 9"/>
-            </svg>
-            <span class="btn-label">Refresh</span>
-          </button>
-
-          <button id="clearGalleryBtn">
-            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="3 6 5 6 21 6"/>
-              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-              <path d="M10 11v6"/>
-              <path d="M14 11v6"/>
-            </svg>
-            <span class="btn-label">Clear Gallery</span>
-          </button>
-        </div>
+        <button id="refreshGalleryBtn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+            <path d="M16 16h5v5"/>
+          </svg>
+          <span>Refresh</span>
+        </button>
       </div>
       <div class="gallery-grid" id="galleryGrid">
-        <p style="font-size: 12px; color: #64748b; text-align: center; width: 100%; grid-column: 1 / -1; margin: 20px 0;">
+        <p style="font-size: 12px; color: var(--text-muted); text-align: center; width: 100%; grid-column: 1 / -1; margin: 20px 0;">
           Ready! Click "Refresh" to view saved transparent PNGs...
         </p>
       </div>
@@ -1115,39 +1076,30 @@
     </div>
   </div>
 
-  <!-- 🔔 ONLINE AUTO-UPDATE POPUP MODAL -->
   <div class="update-modal-overlay" id="updateModalOverlay">
     <div class="update-modal-card">
-      <div class="update-modal-icon-circle" aria-hidden="true">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
+      <div class="update-hero-icon" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 16V4"/>
+          <path d="M7 9l5-5 5 5"/>
+          <path d="M20 16v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2"/>
         </svg>
       </div>
       <h3 class="update-modal-title">New App Update Available!</h3>
-      <div class="update-version-pill" id="updateVersionPill">v1.0.0 → v1.0.1</div>
+      <div class="update-version-pill" id="updateVersionPill">v1.0.0 ➔ v1.0.1</div>
       <div class="update-notes-box" id="updateNotesBox">
         New features and improvements are ready to sync!
       </div>
-      <div id="updateStatusText" style="font-size: 12px; color: #0ea5e9; margin-bottom: 12px; display: none;">
+      <div id="updateStatusText" style="font-size: 12px; color: var(--accent); margin-bottom: 12px; display: none;">
         Syncing latest files...
       </div>
       <div class="update-modal-actions">
-        <button id="confirmUpdateBtn">
-          <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          <span class="btn-label" id="confirmUpdateLabel">Update & Restart Now</span>
-        </button>
+        <button id="confirmUpdateBtn">Update &amp; Restart Now</button>
         <button id="closeUpdateModalBtn">Later</button>
       </div>
     </div>
   </div>
 
-  <!-- Toast Notification -->
   <div class="toast-banner" id="toastBanner"></div>
 
   <script src="renderer.js"></script>
